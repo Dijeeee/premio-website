@@ -1,13 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin, Home, Grid3X3, Package, MessageSquare } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-const mainNavLinks = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/kategori", label: "Kategori", icon: Grid3X3 },
-  { href: "/produk", label: "Produk", icon: Package },
-  { href: "/review", label: "Review", icon: MessageSquare },
-];
+import { Link } from "react-router-dom";
+import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react";
 
 const footerLinks = {
   produk: [
@@ -43,33 +35,8 @@ const socialLinks = [
 ];
 
 export function Footer() {
-  const location = useLocation();
-
   return (
     <footer className="bg-card border-t border-border">
-      {/* Quick Navigation Bar */}
-      <div className="border-b border-border bg-muted/30">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
-            {mainNavLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
-                  location.pathname === link.href
-                    ? "bg-primary text-primary-foreground shadow-glow"
-                    : "bg-card text-muted-foreground hover:text-foreground hover:bg-muted border border-border"
-                )}
-              >
-                <link.icon className="h-4 w-4" />
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4 py-10 md:py-12">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 lg:gap-8">
           {/* Brand Section */}
