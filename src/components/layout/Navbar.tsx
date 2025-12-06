@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Sun, Moon, ShoppingCart, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
+import { products } from "@/data/products";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -16,9 +18,14 @@ const navLinks = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<typeof products>([]);
+  const searchRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
   const { totalItems, setIsCartOpen } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +34,49 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+        setSearchQuery("");
+        setSearchResults([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim().length > 0) {
+      const filtered = products.filter(
+        (product) =>
+          product.name.toLowerCase().includes(query.toLowerCase()) ||
+          product.category.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filtered.slice(0, 5));
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleSelectProduct = (productId: string) => {
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    navigate(`/produk/${productId}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setIsSearchOpen(false);
+      navigate(`/produk?search=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+  };
 
   return (
     <header
@@ -67,10 +117,66 @@ export function Navbar() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-1 md:gap-2">
+            {/* Search */}
+            <div ref={searchRef} className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+
+              {/* Search Dropdown */}
+              {isSearchOpen && (
+                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-card border border-border rounded-xl shadow-xl animate-scale-in overflow-hidden">
+                  <form onSubmit={handleSearchSubmit} className="p-3">
+                    <Input
+                      type="text"
+                      placeholder="Cari aplikasi..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="h-10"
+                      autoFocus
+                    />
+                  </form>
+                  {searchResults.length > 0 && (
+                    <div className="border-t border-border max-h-64 overflow-y-auto">
+                      {searchResults.map((product) => (
+                        <button
+                          key={product.id}
+                          onClick={() => handleSelectProduct(product.id)}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left"
+                        >
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-10 h-10 rounded-lg object-cover"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{product.name}</div>
+                            <div className="text-xs text-muted-foreground">{product.category}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchQuery && searchResults.length === 0 && (
+                    <div className="p-4 text-center text-sm text-muted-foreground border-t border-border">
+                      Tidak ada hasil untuk "{searchQuery}"
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle */}
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleTheme}>
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 
+            {/* Cart */}
             <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={() => setIsCartOpen(true)}>
               <ShoppingCart className="h-4 w-4" />
               {totalItems > 0 && (
