@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Sun, Moon, ShoppingCart, Search } from "lucide-react";
+import { Menu, X, Sun, Moon, ShoppingCart, Search, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { cn } from "@/lib/utils";
 import { products } from "@/data/products";
 
@@ -12,6 +13,7 @@ const navLinks = [
   { href: "/", label: "Home" },
   { href: "/kategori", label: "Kategori" },
   { href: "/produk", label: "Produk" },
+  { href: "/wishlist", label: "Wishlist" },
   { href: "/review", label: "Review" },
 ];
 
@@ -24,6 +26,7 @@ export function Navbar() {
   const searchRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
   const { totalItems, setIsCartOpen } = useCart();
+  const { totalItems: wishlistTotal } = useWishlist();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -175,6 +178,18 @@ export function Navbar() {
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleTheme}>
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
+
+            {/* Wishlist */}
+            <Link to="/wishlist">
+              <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+                <Heart className="h-4 w-4" />
+                {wishlistTotal > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-medium">
+                    {wishlistTotal}
+                  </span>
+                )}
+              </Button>
+            </Link>
 
             {/* Cart */}
             <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={() => setIsCartOpen(true)}>

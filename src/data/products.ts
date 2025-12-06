@@ -6,6 +6,7 @@ export interface Product {
   logoColor: string;
   image: string;
   category: string;
+  description: string;
   rating: number;
   downloads: string;
   prices: {
@@ -13,6 +14,12 @@ export interface Product {
     monthly: number;
     yearly: number;
   };
+  originalPrices: {
+    weekly: number;
+    monthly: number;
+    yearly: number;
+  };
+  discount: number;
   popular: boolean;
 }
 
@@ -23,10 +30,13 @@ export const products: Product[] = [
     logo: "N", 
     logoColor: "from-red-600 to-red-500", 
     image: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=400&h=300&fit=crop",
-    category: "Streaming", 
+    category: "Streaming",
+    description: "Streaming film & series unlimited HD tanpa iklan",
     rating: 4.9, 
     downloads: "50K+", 
-    prices: { weekly: 25000, monthly: 85000, yearly: 850000 }, 
+    prices: { weekly: 25000, monthly: 85000, yearly: 850000 },
+    originalPrices: { weekly: 45000, monthly: 150000, yearly: 1500000 },
+    discount: 45,
     popular: true 
   },
   { 
@@ -35,10 +45,13 @@ export const products: Product[] = [
     logo: "C", 
     logoColor: "from-cyan-500 to-blue-500", 
     image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop",
-    category: "Design", 
+    category: "Design",
+    description: "Desain grafis profesional dengan ribuan template",
     rating: 4.8, 
     downloads: "45K+", 
-    prices: { weekly: 20000, monthly: 75000, yearly: 750000 }, 
+    prices: { weekly: 20000, monthly: 75000, yearly: 750000 },
+    originalPrices: { weekly: 35000, monthly: 130000, yearly: 1300000 },
+    discount: 42,
     popular: true 
   },
   { 
@@ -47,10 +60,13 @@ export const products: Product[] = [
     logo: "G", 
     logoColor: "from-emerald-500 to-teal-500", 
     image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=300&fit=crop",
-    category: "AI Tools", 
+    category: "AI Tools",
+    description: "AI assistant cerdas untuk produktivitas maksimal",
     rating: 4.9, 
     downloads: "40K+", 
-    prices: { weekly: 50000, monthly: 180000, yearly: 1800000 }, 
+    prices: { weekly: 50000, monthly: 180000, yearly: 1800000 },
+    originalPrices: { weekly: 85000, monthly: 320000, yearly: 3200000 },
+    discount: 44,
     popular: true 
   },
   { 
@@ -59,10 +75,13 @@ export const products: Product[] = [
     logo: "S", 
     logoColor: "from-green-500 to-green-400", 
     image: "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=400&h=300&fit=crop",
-    category: "Musik", 
+    category: "Musik",
+    description: "Musik tanpa batas, offline mode, tanpa iklan",
     rating: 4.8, 
     downloads: "60K+", 
-    prices: { weekly: 15000, monthly: 55000, yearly: 550000 }, 
+    prices: { weekly: 15000, monthly: 55000, yearly: 550000 },
+    originalPrices: { weekly: 25000, monthly: 95000, yearly: 950000 },
+    discount: 42,
     popular: true 
   },
   { 
@@ -71,10 +90,13 @@ export const products: Product[] = [
     logo: "CC", 
     logoColor: "from-slate-700 to-slate-600", 
     image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=400&h=300&fit=crop",
-    category: "Editing", 
+    category: "Editing",
+    description: "Edit video profesional dengan efek premium",
     rating: 4.7, 
     downloads: "35K+", 
-    prices: { weekly: 18000, monthly: 65000, yearly: 650000 }, 
+    prices: { weekly: 18000, monthly: 65000, yearly: 650000 },
+    originalPrices: { weekly: 30000, monthly: 110000, yearly: 1100000 },
+    discount: 40,
     popular: false 
   },
   { 
@@ -83,10 +105,13 @@ export const products: Product[] = [
     logo: "Ai", 
     logoColor: "from-red-500 to-rose-500", 
     image: "https://images.unsplash.com/photo-1626785774625-0b1c2c4eab67?w=400&h=300&fit=crop",
-    category: "Design", 
+    category: "Design",
+    description: "Suite lengkap untuk kreator profesional",
     rating: 4.9, 
     downloads: "30K+", 
-    prices: { weekly: 75000, monthly: 280000, yearly: 2800000 }, 
+    prices: { weekly: 75000, monthly: 280000, yearly: 2800000 },
+    originalPrices: { weekly: 150000, monthly: 550000, yearly: 5500000 },
+    discount: 50,
     popular: true 
   },
   { 
@@ -95,10 +120,13 @@ export const products: Product[] = [
     logo: "N", 
     logoColor: "from-slate-800 to-slate-700", 
     image: "https://images.unsplash.com/photo-1517842645767-c639042777db?w=400&h=300&fit=crop",
-    category: "Productivity", 
+    category: "Productivity",
+    description: "Workspace all-in-one untuk tim produktif",
     rating: 4.8, 
     downloads: "25K+", 
-    prices: { weekly: 15000, monthly: 55000, yearly: 550000 }, 
+    prices: { weekly: 15000, monthly: 55000, yearly: 550000 },
+    originalPrices: { weekly: 25000, monthly: 95000, yearly: 950000 },
+    discount: 42,
     popular: false 
   },
   { 
@@ -107,10 +135,13 @@ export const products: Product[] = [
     logo: "D+", 
     logoColor: "from-blue-600 to-indigo-600", 
     image: "https://images.unsplash.com/photo-1616530940355-351fabd9524b?w=400&h=300&fit=crop",
-    category: "Streaming", 
+    category: "Streaming",
+    description: "Film Disney, Marvel, Star Wars dalam satu tempat",
     rating: 4.7, 
     downloads: "38K+", 
-    prices: { weekly: 22000, monthly: 80000, yearly: 800000 }, 
+    prices: { weekly: 22000, monthly: 80000, yearly: 800000 },
+    originalPrices: { weekly: 40000, monthly: 140000, yearly: 1400000 },
+    discount: 43,
     popular: false 
   },
   { 
@@ -119,10 +150,13 @@ export const products: Product[] = [
     logo: "M", 
     logoColor: "from-indigo-500 to-purple-500", 
     image: "https://images.unsplash.com/photo-1686191128892-3b37add4138b?w=400&h=300&fit=crop",
-    category: "AI Tools", 
+    category: "AI Tools",
+    description: "Generate gambar AI berkualitas tinggi",
     rating: 4.9, 
     downloads: "32K+", 
-    prices: { weekly: 45000, monthly: 160000, yearly: 1600000 }, 
+    prices: { weekly: 45000, monthly: 160000, yearly: 1600000 },
+    originalPrices: { weekly: 80000, monthly: 290000, yearly: 2900000 },
+    discount: 45,
     popular: true 
   },
   { 
@@ -131,10 +165,13 @@ export const products: Product[] = [
     logo: "G", 
     logoColor: "from-green-600 to-emerald-500", 
     image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&h=300&fit=crop",
-    category: "Productivity", 
+    category: "Productivity",
+    description: "Koreksi tata bahasa & penulisan otomatis",
     rating: 4.7, 
     downloads: "28K+", 
-    prices: { weekly: 18000, monthly: 65000, yearly: 650000 }, 
+    prices: { weekly: 18000, monthly: 65000, yearly: 650000 },
+    originalPrices: { weekly: 32000, monthly: 115000, yearly: 1150000 },
+    discount: 43,
     popular: false 
   },
   { 
@@ -143,10 +180,13 @@ export const products: Product[] = [
     logo: "F", 
     logoColor: "from-orange-500 to-pink-500", 
     image: "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=400&h=300&fit=crop",
-    category: "Design", 
+    category: "Design",
+    description: "Kolaborasi desain UI/UX real-time",
     rating: 4.9, 
     downloads: "42K+", 
-    prices: { weekly: 22000, monthly: 80000, yearly: 800000 }, 
+    prices: { weekly: 22000, monthly: 80000, yearly: 800000 },
+    originalPrices: { weekly: 40000, monthly: 140000, yearly: 1400000 },
+    discount: 43,
     popular: true 
   },
   { 
@@ -155,10 +195,13 @@ export const products: Product[] = [
     logo: "H", 
     logoColor: "from-purple-600 to-violet-600", 
     image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop",
-    category: "Streaming", 
+    category: "Streaming",
+    description: "Series premium & film blockbuster terbaru",
     rating: 4.6, 
     downloads: "22K+", 
-    prices: { weekly: 25000, monthly: 90000, yearly: 900000 }, 
+    prices: { weekly: 25000, monthly: 90000, yearly: 900000 },
+    originalPrices: { weekly: 45000, monthly: 160000, yearly: 1600000 },
+    discount: 44,
     popular: false 
   },
 ];
