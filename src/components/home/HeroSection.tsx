@@ -2,90 +2,89 @@ import { Search, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function HeroSection() {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/produk?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Background Elements */}
+    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-16">
+      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-300" />
-      
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
+      <div className="absolute top-1/3 left-1/4 w-64 md:w-80 h-64 md:h-80 bg-primary/20 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-1/3 right-1/4 w-64 md:w-80 h-64 md:h-80 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-300" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8 animate-fade-in">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Platform Premium #1 Indonesia</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6 animate-fade-in">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-medium text-primary">Platform Premium #1 Indonesia</span>
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 animate-slide-up leading-tight">
             Aplikasi Premium,{" "}
-            <span className="premio-gradient-text">Harga Terbaik</span>
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Harga Terbaik</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto animate-slide-up animation-delay-100">
-            Dapatkan akses ke ribuan aplikasi premium dengan harga terjangkau. 
+          <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-xl mx-auto animate-slide-up animation-delay-100">
             Lisensi resmi, aktivasi instan, dan dukungan 24/7.
           </p>
 
           {/* Search Bar */}
-          <div className="relative max-w-2xl mx-auto mb-10 animate-slide-up animation-delay-200">
+          <form onSubmit={handleSearch} className="relative max-w-xl mx-auto mb-8 animate-slide-up animation-delay-200">
             <div className="relative flex items-center">
-              <Search className="absolute left-5 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Cari aplikasi premium... (Netflix, Canva, ChatGPT)"
+                placeholder="Cari Netflix, Canva, ChatGPT..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-14 pr-32 h-16 text-base rounded-2xl border-2 border-border bg-card shadow-lg focus:shadow-glow focus:border-primary/50"
+                className="pl-12 pr-28 h-12 md:h-14 text-sm md:text-base rounded-xl border-2 bg-card shadow-lg focus:shadow-glow"
               />
-              <Button
-                variant="premium"
-                className="absolute right-2 h-12 px-6"
-              >
+              <Button type="submit" variant="premium" className="absolute right-1.5 h-9 md:h-11 px-4 md:px-6 text-sm">
                 Cari
               </Button>
             </div>
-          </div>
+          </form>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up animation-delay-300">
-            <Button variant="hero" size="xl" className="group">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300">
+            <Button variant="premium" size="lg" className="group w-full sm:w-auto" onClick={() => navigate("/produk")}>
               Mulai Belanja
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="hero-outline" size="xl">
-              Lihat Paket Premium
+            <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => navigate("/kategori")}>
+              Lihat Kategori
             </Button>
           </div>
 
           {/* Stats */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 animate-fade-in animation-delay-400">
+          <div className="mt-12 grid grid-cols-4 gap-4 md:gap-8 animate-fade-in animation-delay-400">
             {[
-              { value: "50K+", label: "Pengguna Aktif" },
-              { value: "500+", label: "Aplikasi Premium" },
-              { value: "99.9%", label: "Kepuasan Pelanggan" },
-              { value: "24/7", label: "Dukungan" },
+              { value: "50K+", label: "Pengguna" },
+              { value: "500+", label: "Aplikasi" },
+              { value: "99%", label: "Puas" },
+              { value: "24/7", label: "Support" },
             ].map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold premio-gradient-text">{stat.value}</div>
-                <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+                <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
-
-      {/* Bottom Gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
     </section>
   );
 }
