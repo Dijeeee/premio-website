@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Sun, Moon, ShoppingCart, Search, Heart } from "lucide-react";
+import { Menu, X, Sun, Moon, ShoppingCart, Search, Heart, User, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { products } from "@/data/products";
+import { toast } from "sonner";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -27,8 +29,15 @@ export function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const { totalItems, setIsCartOpen } = useCart();
   const { totalItems: wishlistTotal } = useWishlist();
+  const { user, isAdmin, signOut, isLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Berhasil logout");
+    navigate("/");
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -202,12 +211,37 @@ export function Navbar() {
             </Button>
 
             <div className="hidden md:flex items-center gap-2 ml-1">
-              <Link to="/login">
-                <Button variant="ghost" size="sm">Masuk</Button>
-              </Link>
-              <Link to="/register">
-                <Button variant="premium" size="sm">Daftar</Button>
-              </Link>
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <Link to="/admin">
+                      <Button variant="ghost" size="sm" className="gap-1.5">
+                        <Shield className="h-4 w-4" />
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
+                  <Link to="/dashboard">
+                    <Button variant="ghost" size="sm" className="gap-1.5">
+                      <User className="h-4 w-4" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button variant="outline" size="sm" onClick={handleLogout} className="gap-1.5">
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button variant="ghost" size="sm">Masuk</Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button variant="premium" size="sm">Daftar</Button>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -241,13 +275,38 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <div className="flex gap-2 mt-3 px-1">
-                <Link to="/login" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="outline" size="sm" className="w-full">Masuk</Button>
-                </Link>
-                <Link to="/register" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button variant="premium" size="sm" className="w-full">Daftar</Button>
-                </Link>
+              <div className="flex flex-col gap-2 mt-3 px-1">
+                {user ? (
+                  <>
+                    {isAdmin && (
+                      <Link to="/admin" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="outline" size="sm" className="w-full gap-1.5">
+                          <Shield className="h-4 w-4" />
+                          Admin Panel
+                        </Button>
+                      </Link>
+                    )}
+                    <Link to="/dashboard" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="outline" size="sm" className="w-full gap-1.5">
+                        <User className="h-4 w-4" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button variant="destructive" size="sm" className="w-full gap-1.5" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <div className="flex gap-2">
+                    <Link to="/auth" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="outline" size="sm" className="w-full">Masuk</Button>
+                    </Link>
+                    <Link to="/auth" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="premium" size="sm" className="w-full">Daftar</Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -23,8 +23,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/data/products";
+import { toast } from "sonner";
 
 const sidebarLinks = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -39,7 +41,35 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { items, totalItems, totalPrice } = useCart();
+  const { user, isLoading, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, isLoading, navigate]);
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Berhasil logout");
+    navigate("/");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const userName = user.email?.split("@")[0] || "User";
 
   const stats = [
     { label: "Di Keranjang", value: totalItems.toString(), icon: ShoppingBag, color: "from-blue-500 to-cyan-500" },
@@ -93,8 +123,16 @@ export default function Dashboard() {
           })}
         </nav>
 
-        <div className="p-3 border-t border-border">
-          <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-destructive h-9">
+        <div className="p-3 border-t border-border space-y-2">
+          <div className="px-3 py-2 text-sm text-muted-foreground truncate">
+            {user.email}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full justify-start text-muted-foreground hover:text-destructive h-9"
+            onClick={handleLogout}
+          >
             <LogOut className="h-4 w-4 mr-2" />
             Keluar
           </Button>
@@ -116,14 +154,14 @@ export default function Dashboard() {
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-destructive rounded-full" />
             </Button>
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-              <span className="text-primary-foreground font-semibold text-xs">JD</span>
+              <span className="text-primary-foreground font-semibold text-xs">{userName.substring(0, 2).toUpperCase()}</span>
             </div>
           </div>
         </header>
 
         <main className="flex-1 p-4 md:p-6">
           <div className="mb-6">
-            <h1 className="text-xl md:text-2xl font-bold mb-1">Selamat Datang, John! 👋</h1>
+            <h1 className="text-xl md:text-2xl font-bold mb-1">Selamat Datang, {userName}! 👋</h1>
             <p className="text-sm text-muted-foreground">Ringkasan aktivitas akun Anda</p>
           </div>
 
