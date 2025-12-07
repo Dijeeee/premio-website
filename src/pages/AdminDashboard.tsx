@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,
@@ -21,13 +21,16 @@ import {
   ShoppingCart,
   ArrowUpRight,
   MoreVertical,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const sidebarLinks = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
@@ -71,7 +74,46 @@ function formatPrice(price: number) {
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { user, isAdmin, isLoading, signOut, checkIsAdmin } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        navigate("/admin-login");
+        return;
+      }
+      
+      checkIsAdmin().then((isAdminUser) => {
+        if (!isAdminUser) {
+          toast.error("Akses ditolak: Anda bukan admin");
+          navigate("/dashboard");
+        }
+      });
+    }
+  }, [user, isLoading, navigate, checkIsAdmin]);
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Berhasil logout");
+    navigate("/admin-login");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Memverifikasi akses admin...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -134,8 +176,19 @@ export default function AdminDashboard() {
         </nav>
 
         {/* Bottom */}
-        <div className="p-4 border-t border-border">
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive">
+        <div className="p-4 border-t border-border space-y-2">
+          <div className="px-4 py-2 text-sm text-muted-foreground">
+            <div className="font-medium text-foreground">{user.email}</div>
+            <div className="text-xs flex items-center gap-1 mt-1">
+              <Shield className="h-3 w-3 text-primary" />
+              Administrator
+            </div>
+          </div>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-muted-foreground hover:text-destructive"
+            onClick={handleLogout}
+          >
             <LogOut className="h-5 w-5 mr-3" />
             Keluar
           </Button>
