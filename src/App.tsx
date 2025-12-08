@@ -48,6 +48,11 @@ const App = () => (
                   <Route path="/wishlist" element={<Wishlist />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/dashboard/keranjang" element={<Dashboard />} />
+                  <Route path="/dashboard/langganan" element={<Dashboard />} />
+                  <Route path="/dashboard/download" element={<Dashboard />} />
+                  <Route path="/dashboard/profil" element={<Dashboard />} />
+                  <Route path="/dashboard/pengaturan" element={<Dashboard />} />
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -61,7 +61,7 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span>Jakarta, Indonesia</span>
+                <span>Purwokerto, Banyumas, Jawa Tengah</span>
               </div>
             </div>
           </div>
@@ -138,7 +138,7 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2024 Premio. All rights reserved.
+            © 2025 Premio. Hak cipta dilindungi undang-undang.
           </p>
           <div className="flex items-center gap-3">
             {socialLinks.map((social) => (
