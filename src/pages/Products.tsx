@@ -99,7 +99,7 @@ export default function Products() {
                     </div>
                     <div className="p-2.5">
                       <h3 className="font-semibold text-xs md:text-sm mb-0.5 line-clamp-1">{product.name}</h3>
-                      <p className="text-[10px] text-muted-foreground mb-1.5">{product.category}</p>
+                      <p className="text-[10px] text-muted-foreground mb-1 line-clamp-2 min-h-[24px]">{product.description}</p>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="flex items-center gap-0.5">
                           <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
@@ -115,8 +115,8 @@ export default function Products() {
                   {/* Plan Selection */}
                   <div className="flex gap-0.5 px-2.5 mb-2">
                     {(["weekly", "monthly", "yearly"] as const).map((plan) => (
-                      <button key={plan} onClick={() => setSelectedPlan((p) => ({ ...p, [product.id]: plan }))} className={`flex-1 py-1 text-[10px] rounded border transition-all ${getPlan(product.id) === plan ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary/50"}`}>
-                        {plan === "weekly" ? "1M" : plan === "monthly" ? "1B" : "1T"}
+                      <button key={plan} onClick={() => setSelectedPlan((p) => ({ ...p, [product.id]: plan }))} className={`flex-1 py-1.5 text-[10px] rounded-lg border transition-all font-medium ${getPlan(product.id) === plan ? "bg-primary text-primary-foreground border-primary shadow-sm" : "border-border hover:border-primary/50 hover:bg-muted/50"}`}>
+                        {plan === "weekly" ? "Mingguan" : plan === "monthly" ? "Bulanan" : "Tahunan"}
                       </button>
                     ))}
                   </div>

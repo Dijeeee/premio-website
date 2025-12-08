@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Star, ThumbsUp, MessageCircle, Filter, User } from "lucide-react";
+import { Star, ThumbsUp, MessageCircle, Plus } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 const reviews = [
   { id: 1, name: "Sarah Wijaya", avatar: "SW", color: "from-pink-500 to-rose-500", rating: 5, product: "Netflix Premium", date: "2 hari lalu", content: "Proses aktivasi sangat cepat! Dalam 5 menit akun sudah aktif. Kualitas streaming 4K tanpa buffering. Recommended banget!", likes: 42, verified: true },
@@ -25,6 +29,22 @@ const stats = [
 
 export default function Reviews() {
   const [filter, setFilter] = useState("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newRating, setNewRating] = useState(5);
+  const [newReview, setNewReview] = useState("");
+  const [productName, setProductName] = useState("");
+
+  const handleSubmitReview = () => {
+    if (!newReview.trim() || !productName.trim()) {
+      toast.error("Mohon lengkapi semua field");
+      return;
+    }
+    toast.success("Terima kasih! Ulasan Anda berhasil dikirim");
+    setIsDialogOpen(false);
+    setNewReview("");
+    setProductName("");
+    setNewRating(5);
+  };
 
   return (
     <div className="min-h-screen">
@@ -32,11 +52,49 @@ export default function Reviews() {
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
-          <div className="py-6 md:py-10">
-            <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              Ulasan <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Pelanggan</span>
-            </h1>
-            <p className="text-muted-foreground">Apa kata mereka tentang Premio</p>
+          <div className="py-6 md:py-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-3">
+                Ulasan <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Pelanggan</span>
+              </h1>
+              <p className="text-muted-foreground">Apa kata mereka tentang Premio</p>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="premium" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Tambah Rating
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Tambah Ulasan</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Produk</label>
+                    <Input placeholder="Nama produk yang Anda beli" value={productName} onChange={(e) => setProductName(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Rating</label>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button key={star} type="button" onClick={() => setNewRating(star)} className="p-1 transition-transform hover:scale-110">
+                          <Star className={`h-6 w-6 ${star <= newRating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Ulasan</label>
+                    <Textarea placeholder="Bagikan pengalaman Anda..." value={newReview} onChange={(e) => setNewReview(e.target.value)} rows={4} />
+                  </div>
+                  <Button variant="premium" className="w-full" onClick={handleSubmitReview}>
+                    Kirim Ulasan
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Stats */}

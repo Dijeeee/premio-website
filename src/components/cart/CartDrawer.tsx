@@ -25,12 +25,12 @@ export function CartDrawer() {
       {/* Drawer */}
       <div
         className={cn(
-          "fixed top-0 right-0 h-full w-full max-w-md bg-card border-l border-border z-50 shadow-2xl transition-transform duration-300 flex flex-col",
+          "fixed top-0 right-0 h-full w-full max-w-md bg-card border-l border-border z-[60] shadow-2xl transition-transform duration-300 flex flex-col",
           isCartOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         {/* Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="p-4 pt-20 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5 text-primary" />
             <h2 className="font-semibold text-lg">Keranjang ({items.length})</h2>
@@ -46,9 +46,11 @@ export function CartDrawer() {
             <div className="flex flex-col items-center justify-center h-full text-center">
               <ShoppingCart className="h-16 w-16 text-muted-foreground/30 mb-4" />
               <p className="text-muted-foreground">Keranjang kosong</p>
-              <Button variant="outline" className="mt-4" onClick={() => setIsCartOpen(false)}>
-                Mulai Belanja
-              </Button>
+              <Link to="/produk" onClick={() => setIsCartOpen(false)}>
+                <Button variant="outline" className="mt-4">
+                  Mulai Belanja
+                </Button>
+              </Link>
             </div>
           ) : (
             items.map((item) => (
