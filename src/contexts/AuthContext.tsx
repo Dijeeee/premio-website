@@ -21,14 +21,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const checkIsAdmin = async (): Promise<boolean> => {
-    if (!user) return false;
+  const checkIsAdmin = async (userId?: string): Promise<boolean> => {
+    const checkUserId = userId || user?.id;
+    if (!checkUserId) return false;
     
     try {
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
+        .eq("user_id", checkUserId)
         .eq("role", "admin")
         .maybeSingle();
 
@@ -37,7 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      return !!data;
+      const result = !!data;
+      setIsAdmin(result);
+      return result;
     } catch (error) {
       console.error("Error checking admin role:", error);
       return false;
@@ -47,17 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
 
-        // Defer admin check with setTimeout to prevent deadlock
+        // Check admin status with user id directly
         if (session?.user) {
-          setTimeout(async () => {
-            const adminStatus = await checkIsAdmin();
-            setIsAdmin(adminStatus);
-          }, 0);
+          await checkIsAdmin(session.user.id);
         } else {
           setIsAdmin(false);
         }
@@ -65,16 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
 
       if (session?.user) {
-        setTimeout(async () => {
-          const adminStatus = await checkIsAdmin();
-          setIsAdmin(adminStatus);
-        }, 0);
+        await checkIsAdmin(session.user.id);
       }
     });
 

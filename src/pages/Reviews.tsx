@@ -111,7 +111,7 @@ export default function Reviews() {
 
           {/* Filter */}
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-            {["all", "5", "4", "3"].map((f) => (
+            {["all", "5", "4", "3", "2", "1"].map((f) => (
               <Button
                 key={f}
                 variant={filter === f ? "premium" : "outline"}
