@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Sun, Moon, ShoppingCart, Search, Heart, User, LogOut, Shield } from "lucide-react";
+import { Menu, X, Sun, Moon, ShoppingCart, Search, Heart, User, LogOut, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -25,18 +25,25 @@ export function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<typeof products>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useTheme();
   const { totalItems, setIsCartOpen } = useCart();
   const { totalItems: wishlistTotal } = useWishlist();
-  const { user, isAdmin, signOut, isLoading } = useAuth();
+  const { user, signOut, isLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await signOut();
-    toast.success("Berhasil logout");
-    navigate("/");
+    try {
+      await signOut();
+      toast.success("Berhasil logout");
+      setIsMobileMenuOpen(false);
+      navigate("/");
+    } catch (error) {
+      toast.error("Gagal logout");
+    }
   };
 
   useEffect(() => {
@@ -134,38 +141,72 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9"
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className={cn(
+                  "h-9 w-9 transition-all duration-300",
+                  isSearchOpen && "bg-primary/10 text-primary"
+                )}
+                onClick={() => {
+                  setIsSearchOpen(!isSearchOpen);
+                  if (!isSearchOpen) {
+                    setTimeout(() => searchInputRef.current?.focus(), 100);
+                  }
+                }}
               >
-                <Search className="h-4 w-4" />
+                <Search className={cn(
+                  "h-4 w-4 transition-transform duration-300",
+                  isSearchOpen && "scale-110"
+                )} />
               </Button>
 
               {/* Search Dropdown */}
               {isSearchOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-card border border-border rounded-xl shadow-xl animate-scale-in overflow-hidden">
+                <div className="fixed inset-x-0 top-14 md:top-16 md:absolute md:inset-x-auto md:right-0 md:top-full md:mt-2 mx-4 md:mx-0 md:w-96 bg-card border border-border rounded-xl shadow-xl animate-scale-in overflow-hidden z-50">
                   <form onSubmit={handleSearchSubmit} className="p-3">
-                    <Input
-                      type="text"
-                      placeholder="Cari aplikasi..."
-                      value={searchQuery}
-                      onChange={(e) => handleSearch(e.target.value)}
-                      className="h-10"
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Cari aplikasi premium..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={() => setIsSearchFocused(false)}
+                        className={cn(
+                          "h-11 pl-10 text-center md:text-left transition-all duration-300",
+                          isSearchFocused && "ring-2 ring-primary/20"
+                        )}
+                      />
+                    </div>
                   </form>
+                  {searchQuery.length === 0 && (
+                    <div className="border-t border-border p-3">
+                      <p className="text-xs text-muted-foreground mb-2">Saran Pencarian</p>
+                      <div className="flex flex-wrap gap-2">
+                        {["Netflix", "Canva", "Spotify", "Adobe"].map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            onClick={() => handleSearch(suggestion)}
+                            className="px-3 py-1.5 text-xs bg-muted hover:bg-primary/10 hover:text-primary rounded-full transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {searchResults.length > 0 && (
                     <div className="border-t border-border max-h-64 overflow-y-auto">
-                      {searchResults.map((product) => (
+                      {searchResults.map((product, index) => (
                         <button
                           key={product.id}
                           onClick={() => handleSelectProduct(product.id)}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left"
+                          className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-all duration-200 text-left animate-fade-in"
+                          style={{ animationDelay: `${index * 50}ms` }}
                         >
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-10 h-10 rounded-lg object-cover"
-                          />
+                          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${product.logoColor} flex items-center justify-center flex-shrink-0`}>
+                            <span className="text-white font-bold text-xs">{product.logo}</span>
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-sm truncate">{product.name}</div>
                             <div className="text-xs text-muted-foreground">{product.category}</div>
@@ -213,18 +254,14 @@ export function Navbar() {
             <div className="hidden md:flex items-center gap-2 ml-1">
               {user ? (
                 <>
-                  {isAdmin && (
-                    <Link to="/admin">
-                      <Button variant="ghost" size="sm" className="gap-1.5">
-                        <Shield className="h-4 w-4" />
-                        Admin
-                      </Button>
-                    </Link>
-                  )}
-                  <Link to="/dashboard">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+                    <Bell className="h-4 w-4" />
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-destructive rounded-full" />
+                  </Button>
+                  <Link to="/dashboard/profil">
                     <Button variant="ghost" size="sm" className="gap-1.5">
                       <User className="h-4 w-4" />
-                      Dashboard
+                      Profil
                     </Button>
                   </Link>
                   <Button variant="outline" size="sm" onClick={handleLogout} className="gap-1.5">
@@ -278,21 +315,17 @@ export function Navbar() {
               <div className="flex flex-col gap-2 mt-3 px-1">
                 {user ? (
                   <>
-                    {isAdmin && (
-                      <Link to="/admin" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Button variant="outline" size="sm" className="w-full gap-1.5">
-                          <Shield className="h-4 w-4" />
-                          Admin Panel
-                        </Button>
-                      </Link>
-                    )}
-                    <Link to="/dashboard" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link to="/dashboard/profil" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button variant="outline" size="sm" className="w-full gap-1.5">
                         <User className="h-4 w-4" />
-                        Dashboard
+                        Profil
                       </Button>
                     </Link>
-                    <Button variant="destructive" size="sm" className="w-full gap-1.5" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>
+                    <Button variant="outline" size="sm" className="w-full gap-1.5">
+                      <Bell className="h-4 w-4" />
+                      Notifikasi
+                    </Button>
+                    <Button variant="destructive" size="sm" className="w-full gap-1.5" onClick={handleLogout}>
                       <LogOut className="h-4 w-4" />
                       Logout
                     </Button>

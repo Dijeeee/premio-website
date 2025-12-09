@@ -10,7 +10,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import AdminLogin from "./pages/AdminLogin";
 import Register from "./pages/Register";
 import ProductDetail from "./pages/ProductDetail";
 import Products from "./pages/Products";
@@ -18,7 +17,6 @@ import Categories from "./pages/Categories";
 import Reviews from "./pages/Reviews";
 import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
-import AdminDashboard from "./pages/AdminDashboard";
 import Wishlist from "./pages/Wishlist";
 import NotFound from "./pages/NotFound";
 
@@ -39,7 +37,6 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Auth />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/admin-login" element={<AdminLogin />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/produk" element={<Products />} />
                   <Route path="/produk/:id" element={<ProductDetail />} />
@@ -53,7 +50,6 @@ const App = () => (
                   <Route path="/dashboard/download" element={<Dashboard />} />
                   <Route path="/dashboard/profil" element={<Dashboard />} />
                   <Route path="/dashboard/pengaturan" element={<Dashboard />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
