@@ -1,23 +1,46 @@
-import { useState } from "react";
-import { User, Mail, Phone, MapPin, Calendar, Camera, Save } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { User, Mail, Phone, MapPin, Calendar, Camera, Save, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { id } from "date-fns/locale";
 
 export function DashboardProfile() {
   const { user } = useAuth();
-  const userName = user?.email?.split("@")[0] || "User";
+  const { profile, loading, updateProfile, uploadAvatar } = useProfile();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
-    fullName: userName,
-    email: user?.email || "",
-    phone: "+62 812-3456-7890",
-    address: "Purwokerto, Banyumas, Jawa Tengah",
-    bio: "Pengguna setia Premio sejak 2024",
+    full_name: "",
+    email: "",
+    phone: "",
+    address: "",
+    bio: "",
   });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || "",
+        email: profile.email || user?.email || "",
+        phone: profile.phone || "",
+        address: profile.address || "",
+        bio: profile.bio || "",
+      });
+    } else if (user) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || "",
+        full_name: user.email?.split("@")[0] || ""
+      }));
+    }
+  }, [profile, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
@@ -26,9 +49,57 @@ export function DashboardProfile() {
     }));
   };
 
-  const handleSave = () => {
-    toast.success("Profil berhasil diperbarui");
+  const handleSave = async () => {
+    setSaving(true);
+    await updateProfile(formData);
+    setSaving(false);
   };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      return;
+    }
+
+    setUploading(true);
+    await uploadAvatar(file);
+    setUploading(false);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name.substring(0, 2).toUpperCase();
+    }
+    return user?.email?.substring(0, 2).toUpperCase() || "U";
+  };
+
+  const getJoinDate = () => {
+    if (profile?.created_at) {
+      return formatDistanceToNow(new Date(profile.created_at), {
+        addSuffix: true,
+        locale: id
+      });
+    }
+    return "Baru bergabung";
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -41,21 +112,49 @@ export function DashboardProfile() {
         {/* Profile Picture Card */}
         <Card variant="glass" className="p-6 text-center md:col-span-1">
           <div className="relative inline-block mb-4">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto">
-              <span className="text-primary-foreground font-bold text-3xl">
-                {userName.substring(0, 2).toUpperCase()}
-              </span>
+            <div 
+              className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto overflow-hidden cursor-pointer group"
+              onClick={handleAvatarClick}
+            >
+              {uploading ? (
+                <Loader2 className="h-8 w-8 animate-spin text-primary-foreground" />
+              ) : profile?.avatar_url ? (
+                <img 
+                  src={profile.avatar_url} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                />
+              ) : (
+                <span className="text-primary-foreground font-bold text-3xl">
+                  {getInitials()}
+                </span>
+              )}
             </div>
-            <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors">
-              <Camera className="h-4 w-4" />
+            <button 
+              onClick={handleAvatarClick}
+              disabled={uploading}
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Camera className="h-4 w-4" />
+              )}
             </button>
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
           </div>
-          <h3 className="font-semibold text-lg">{formData.fullName}</h3>
+          <h3 className="font-semibold text-lg">{formData.full_name || "User"}</h3>
           <p className="text-sm text-muted-foreground">{formData.email}</p>
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Calendar className="h-3 w-3" />
-              Bergabung Desember 2024
+              Bergabung {getJoinDate()}
             </div>
           </div>
         </Card>
@@ -69,8 +168,8 @@ export function DashboardProfile() {
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  name="fullName"
-                  value={formData.fullName}
+                  name="full_name"
+                  value={formData.full_name}
                   onChange={handleChange}
                   className="pl-10"
                   placeholder="Nama lengkap Anda"
@@ -132,8 +231,17 @@ export function DashboardProfile() {
               />
             </div>
 
-            <Button variant="premium" className="w-full" onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" />
+            <Button 
+              variant="premium" 
+              className="w-full" 
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
               Simpan Perubahan
             </Button>
           </div>

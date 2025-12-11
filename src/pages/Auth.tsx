@@ -24,8 +24,8 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+export default function Auth({ defaultMode = 'login' }: { defaultMode?: 'login' | 'register' }) {
+  const [isLogin, setIsLogin] = useState(defaultMode === 'login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -261,12 +261,6 @@ export default function Auth() {
           </button>
         </p>
 
-        {/* Admin Login Link */}
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          <Link to="/admin-login" className="text-primary/70 hover:text-primary hover:underline">
-            Login sebagai Admin
-          </Link>
-        </p>
       </Card>
     </div>
   );

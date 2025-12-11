@@ -152,7 +152,7 @@ export function FeaturedProducts() {
                           : "border-border hover:border-primary/50 hover:bg-muted/50"
                       )}
                     >
-                      {plan === "weekly" ? "Minggu" : plan === "monthly" ? "Bulan" : "Tahun"}
+                      {plan === "weekly" ? "1 Minggu" : plan === "monthly" ? "1 Bulan" : "1 Tahun"}
                     </button>
                   ))}
                 </div>
