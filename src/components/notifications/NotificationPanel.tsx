@@ -28,16 +28,21 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - only capture clicks on the backdrop itself */}
       <div 
-        className="fixed inset-0 z-40"
-        onClick={onClose}
+        className="fixed inset-0 z-40 bg-transparent"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        style={{ pointerEvents: 'auto' }}
       />
       
       {/* Panel */}
       <Card 
         variant="glass" 
-        className="absolute right-0 top-full mt-2 w-80 md:w-96 z-50 overflow-hidden animate-scale-in"
+        className="absolute right-0 top-full mt-2 w-80 md:w-96 z-[60] overflow-hidden animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
