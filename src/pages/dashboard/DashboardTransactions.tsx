@@ -1,12 +1,19 @@
-import { Link } from "react-router-dom";
-import { FileText, Download, Calendar, CreditCard, CheckCircle, XCircle, Clock, ArrowRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { FileText, Download, Calendar, CreditCard, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
@@ -27,6 +34,7 @@ function getStatusBadge(status: string) {
 
 export default function DashboardTransactions() {
   const { transactions, loading } = useTransactions();
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const generateInvoice = (transaction: Transaction) => {
     const invoiceContent = `
@@ -133,17 +141,15 @@ Support: support@premio.id
 
                   {/* Actions */}
                   <div className="flex flex-col gap-2 shrink-0">
-                    <Link to={`/dashboard/transaksi/${transaction.id}`}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-8 w-full"
-                      >
-                        <FileText className="h-3 w-3 mr-1" />
-                        Detail
-                        <ArrowRight className="h-3 w-3 ml-1" />
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-8"
+                      onClick={() => setSelectedTransaction(transaction)}
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      Detail
+                    </Button>
                     <Button
                       variant="premium"
                       size="sm"
@@ -160,6 +166,80 @@ Support: support@premio.id
           ))}
         </div>
       )}
+
+      {/* Transaction Detail Dialog */}
+      <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detail Transaksi</DialogTitle>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-4">
+              {/* Product Info */}
+              <div className="flex items-center gap-3">
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${selectedTransaction.product_logo_color} flex items-center justify-center`}>
+                  <span className="text-white font-bold text-lg">{selectedTransaction.product_logo}</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold">{selectedTransaction.product_name}</h3>
+                  <p className="text-sm text-muted-foreground">Paket {selectedTransaction.plan_label}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Invoice Details */}
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">No. Invoice</span>
+                  <span className="font-mono">INV-{selectedTransaction.id.slice(0, 8).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Tanggal Pembelian</span>
+                  <span>{format(new Date(selectedTransaction.created_at), "dd MMMM yyyy, HH:mm", { locale: id })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Berlaku Hingga</span>
+                  <span>{format(new Date(selectedTransaction.expires_at), "dd MMMM yyyy", { locale: id })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  {getStatusBadge(selectedTransaction.status)}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Payment Details */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>{formatPrice(selectedTransaction.price)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Diskon</span>
+                  <span>Rp 0</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-semibold">
+                  <span>Total</span>
+                  <span className="text-primary">{formatPrice(selectedTransaction.price)}</span>
+                </div>
+              </div>
+
+              {/* Download Button */}
+              <Button
+                variant="premium"
+                className="w-full"
+                onClick={() => generateInvoice(selectedTransaction)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Unduh Invoice
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
