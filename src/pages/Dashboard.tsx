@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   ShoppingBag,
   CreditCard,
+  FileText,
   Download,
   User,
   Settings,
@@ -24,6 +25,7 @@ import { toast } from "sonner";
 import { DashboardHome } from "./dashboard/DashboardHome";
 import { DashboardCart } from "./dashboard/DashboardCart";
 import { DashboardSubscriptions } from "./dashboard/DashboardSubscriptions";
+import DashboardTransactions from "./dashboard/DashboardTransactions";
 import { DashboardDownloads } from "./dashboard/DashboardDownloads";
 import { DashboardProfile } from "./dashboard/DashboardProfile";
 import { DashboardSettings } from "./dashboard/DashboardSettings";
@@ -32,6 +34,7 @@ const sidebarLinks = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", page: "home" },
   { icon: ShoppingBag, label: "Keranjang", href: "/dashboard/keranjang", page: "cart" },
   { icon: CreditCard, label: "Langganan", href: "/dashboard/langganan", page: "subscriptions" },
+  { icon: FileText, label: "Transaksi", href: "/dashboard/transaksi", page: "transactions" },
   { icon: Download, label: "Download", href: "/dashboard/download", page: "downloads" },
   { icon: User, label: "Profil", href: "/dashboard/profil", page: "profile" },
   { icon: Settings, label: "Pengaturan", href: "/dashboard/pengaturan", page: "settings" },
@@ -51,6 +54,7 @@ export default function Dashboard() {
     if (path === "/dashboard") return "home";
     if (path.includes("keranjang")) return "cart";
     if (path.includes("langganan")) return "subscriptions";
+    if (path.includes("transaksi")) return "transactions";
     if (path.includes("download")) return "downloads";
     if (path.includes("profil")) return "profile";
     if (path.includes("pengaturan")) return "settings";
@@ -91,6 +95,8 @@ export default function Dashboard() {
         return <DashboardCart />;
       case "subscriptions":
         return <DashboardSubscriptions />;
+      case "transactions":
+        return <DashboardTransactions />;
       case "downloads":
         return <DashboardDownloads />;
       case "profile":
