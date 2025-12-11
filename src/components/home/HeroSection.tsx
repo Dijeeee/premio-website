@@ -128,8 +128,8 @@ export function HeroSection() {
             )}
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 relative z-0">
+          {/* CTA Buttons - positioned below search with margin */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 relative mt-4">
             <Button variant="premium" size="lg" className="group w-full sm:w-auto" onClick={() => navigate("/produk")}>
               Mulai Belanja
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />

@@ -1,4 +1,14 @@
 // Centralized product data with images
+import canvaLogo from "@/assets/canva-logo.webp";
+import figmaLogo from "@/assets/figma-logo.png";
+import chatgptLogo from "@/assets/chatgpt-logo.png";
+import midjourneyLogo from "@/assets/midjourney-logo.webp";
+import adobeLogo from "@/assets/adobe-cc-logo.png";
+import capcutLogo from "@/assets/capcut-logo.jpeg";
+import grammarlyLogo from "@/assets/grammarly-logo.png";
+import notionLogo from "@/assets/notion-logo.png";
+import hbomaxLogo from "@/assets/hbomax-logo.png";
+
 export interface Product {
   id: string;
   name: string;
@@ -22,7 +32,6 @@ export interface Product {
   discount: number;
   popular: boolean;
 }
-
 export const products: Product[] = [
   { 
     id: "netflix-premium", 
@@ -44,7 +53,7 @@ export const products: Product[] = [
     name: "Canva Pro", 
     logo: "C", 
     logoColor: "from-cyan-500 to-blue-500", 
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop",
+    image: canvaLogo,
     category: "Design",
     description: "Desain grafis profesional dengan ribuan template",
     rating: 4.8, 
@@ -59,7 +68,7 @@ export const products: Product[] = [
     name: "ChatGPT Plus", 
     logo: "G", 
     logoColor: "from-emerald-500 to-teal-500", 
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=300&fit=crop",
+    image: chatgptLogo,
     category: "AI Tools",
     description: "AI assistant cerdas untuk produktivitas maksimal",
     rating: 4.9, 
@@ -89,7 +98,7 @@ export const products: Product[] = [
     name: "CapCut Pro", 
     logo: "CC", 
     logoColor: "from-slate-700 to-slate-600", 
-    image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=400&h=300&fit=crop",
+    image: capcutLogo,
     category: "Editing",
     description: "Edit video profesional dengan efek premium",
     rating: 4.7, 
@@ -104,7 +113,7 @@ export const products: Product[] = [
     name: "Adobe CC", 
     logo: "Ai", 
     logoColor: "from-red-500 to-rose-500", 
-    image: "https://images.unsplash.com/photo-1626785774625-0b1c2c4eab67?w=400&h=300&fit=crop",
+    image: adobeLogo,
     category: "Design",
     description: "Suite lengkap untuk kreator profesional",
     rating: 4.9, 
@@ -119,7 +128,7 @@ export const products: Product[] = [
     name: "Notion Pro", 
     logo: "N", 
     logoColor: "from-slate-800 to-slate-700", 
-    image: "https://images.unsplash.com/photo-1517842645767-c639042777db?w=400&h=300&fit=crop",
+    image: notionLogo,
     category: "Productivity",
     description: "Workspace all-in-one untuk tim produktif",
     rating: 4.8, 
@@ -149,13 +158,13 @@ export const products: Product[] = [
     name: "Midjourney", 
     logo: "M", 
     logoColor: "from-indigo-500 to-purple-500", 
-    image: "https://images.unsplash.com/photo-1686191128892-3b37add4138b?w=400&h=300&fit=crop",
+    image: midjourneyLogo,
     category: "AI Tools",
     description: "Generate gambar AI berkualitas tinggi",
     rating: 4.9, 
     downloads: "32K+", 
     prices: { weekly: 45000, monthly: 160000, yearly: 1600000 },
-    originalPrices: { weekly: 80000, monthly: 290000, yearly: 2900000 },
+    originalPrices: { weekly: 80000, monthly: 290000, ylabel: 2900000 },
     discount: 45,
     popular: true 
   },
@@ -164,7 +173,7 @@ export const products: Product[] = [
     name: "Grammarly", 
     logo: "G", 
     logoColor: "from-green-600 to-emerald-500", 
-    image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&h=300&fit=crop",
+    image: grammarlyLogo,
     category: "Productivity",
     description: "Koreksi tata bahasa & penulisan otomatis",
     rating: 4.7, 
@@ -179,7 +188,7 @@ export const products: Product[] = [
     name: "Figma Pro", 
     logo: "F", 
     logoColor: "from-orange-500 to-pink-500", 
-    image: "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=400&h=300&fit=crop",
+    image: figmaLogo,
     category: "Design",
     description: "Kolaborasi desain UI/UX real-time",
     rating: 4.9, 
@@ -194,7 +203,7 @@ export const products: Product[] = [
     name: "HBO Max", 
     logo: "H", 
     logoColor: "from-purple-600 to-violet-600", 
-    image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop",
+    image: hbomaxLogo,
     category: "Streaming",
     description: "Series premium & film blockbuster terbaru",
     rating: 4.6, 
