@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, ThumbsUp, MessageCircle, Plus, ChevronDown } from "lucide-react";
+import { Star, ThumbsUp, MessageCircle, Plus, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
@@ -10,45 +10,77 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { products } from "@/data/products";
+import { useReviews } from "@/hooks/useReviews";
+import { useAuth } from "@/contexts/AuthContext";
+import { formatDistanceToNow } from "date-fns";
+import { id } from "date-fns/locale";
 
-const reviews = [
-  { id: 1, name: "Sarah Wijaya", avatar: "SW", color: "from-pink-500 to-rose-500", rating: 5, product: "Netflix Premium", date: "2 hari lalu", content: "Proses aktivasi sangat cepat! Dalam 5 menit akun sudah aktif. Kualitas streaming 4K tanpa buffering. Recommended banget!", likes: 42, verified: true },
-  { id: 2, name: "Andi Pratama", avatar: "AP", color: "from-blue-500 to-cyan-500", rating: 5, product: "Adobe Creative Cloud", date: "3 hari lalu", content: "Sudah 2 tahun berlangganan Adobe CC melalui Premio. Harganya jauh lebih hemat dibanding langganan langsung. Customer service sangat responsif.", likes: 38, verified: true },
-  { id: 3, name: "Dina Kusuma", avatar: "DK", color: "from-purple-500 to-violet-500", rating: 5, product: "Canva Pro", date: "5 hari lalu", content: "Canva Pro dengan harga terbaik! Tidak perlu ribet dengan pembayaran internasional. Semua bisa dibeli dengan mudah.", likes: 35, verified: true },
-  { id: 4, name: "Reza Mahendra", avatar: "RM", color: "from-emerald-500 to-teal-500", rating: 5, product: "ChatGPT Plus", date: "1 minggu lalu", content: "ChatGPT Plus dengan harga kompetitif. Yang paling saya suka adalah garansi seumur hidup untuk setiap pembelian. Highly recommended!", likes: 56, verified: true },
-  { id: 5, name: "Maya Santoso", avatar: "MS", color: "from-amber-500 to-orange-500", rating: 4, product: "Grammarly Premium", date: "1 minggu lalu", content: "Grammarly Premium membantu tulisan saya jadi lebih profesional. Terima kasih Premio untuk harga yang sangat bersahabat!", likes: 28, verified: true },
-  { id: 6, name: "Budi Setiawan", avatar: "BS", color: "from-red-500 to-pink-500", rating: 5, product: "Spotify Premium", date: "2 minggu lalu", content: "Langganan Spotify Premium paling murah yang pernah saya temukan. Aktivasi cepat dan tidak ada masalah selama pemakaian.", likes: 44, verified: true },
-  { id: 7, name: "Lina Hartono", avatar: "LH", color: "from-indigo-500 to-purple-500", rating: 3, product: "Figma Pro", date: "2 minggu lalu", content: "Figma Pro dengan harga student-friendly! Sangat membantu untuk project design kampus. Support tim Premio sangat helpful.", likes: 31, verified: true },
-  { id: 8, name: "Kevin Tanaka", avatar: "KT", color: "from-cyan-500 to-blue-500", rating: 2, product: "Midjourney", date: "3 minggu lalu", content: "Proses aktivasi agak lama, tapi akhirnya bisa digunakan. Semoga kedepannya lebih cepat.", likes: 12, verified: true },
-  { id: 9, name: "Dewi Anggraini", avatar: "DA", color: "from-rose-500 to-red-500", rating: 1, product: "HBO Max", date: "1 bulan lalu", content: "Ada kendala saat aktivasi, tapi tim support membantu menyelesaikan masalah dengan cepat.", likes: 8, verified: true },
-];
-
-const stats = [
-  { value: "4.9", label: "Rating" },
-  { value: "50K+", label: "Reviews" },
-  { value: "99%", label: "Puas" },
+const avatarColors = [
+  "from-pink-500 to-rose-500",
+  "from-blue-500 to-cyan-500",
+  "from-purple-500 to-violet-500",
+  "from-emerald-500 to-teal-500",
+  "from-amber-500 to-orange-500",
+  "from-red-500 to-pink-500",
+  "from-indigo-500 to-purple-500",
+  "from-cyan-500 to-blue-500",
 ];
 
 export default function Reviews() {
+  const { user } = useAuth();
+  const { reviews, loading, createReview, likeReview, getAverageRating } = useReviews();
   const [filter, setFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRating, setNewRating] = useState(5);
   const [newReview, setNewReview] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmitReview = () => {
+  const handleSubmitReview = async () => {
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+      return;
+    }
+
     if (!newReview.trim() || !selectedProduct) {
       toast.error("Mohon lengkapi semua field");
       return;
     }
-    toast.success("Terima kasih! Ulasan Anda berhasil dikirim");
+
+    setIsSubmitting(true);
+    const product = products.find(p => p.name === selectedProduct);
+    
+    await createReview({
+      product_id: product?.id || selectedProduct,
+      product_name: selectedProduct,
+      rating: newRating,
+      content: newReview
+    });
+
     setIsDialogOpen(false);
     setNewReview("");
     setSelectedProduct("");
     setNewRating(5);
+    setIsSubmitting(false);
   };
 
   const filteredReviews = reviews.filter((r) => filter === "all" || r.rating.toString() === filter);
+  const avgRating = getAverageRating();
+
+  const getAvatarColor = (index: number) => avatarColors[index % avatarColors.length];
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return parts[0][0] + parts[1][0];
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const stats = [
+    { value: avgRating || "5.0", label: "Rating" },
+    { value: `${reviews.length}`, label: "Reviews" },
+    { value: "99%", label: "Puas" },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -109,7 +141,15 @@ export default function Reviews() {
                     <label className="text-sm font-medium mb-2 block">Ulasan</label>
                     <Textarea placeholder="Bagikan pengalaman Anda..." value={newReview} onChange={(e) => setNewReview(e.target.value)} rows={4} />
                   </div>
-                  <Button variant="premium" className="w-full" onClick={handleSubmitReview}>
+                  <Button 
+                    variant="premium" 
+                    className="w-full" 
+                    onClick={handleSubmitReview}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
                     Kirim Ulasan
                   </Button>
                 </div>
@@ -149,57 +189,68 @@ export default function Reviews() {
           </div>
 
           {/* Reviews Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            {filteredReviews.map((review, index) => (
-              <Card
-                key={review.id}
-                variant="glass"
-                className="p-3 md:p-4 lg:p-5 animate-slide-up hover:shadow-glow transition-all duration-300"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br ${review.color} flex items-center justify-center flex-shrink-0`}>
-                    <span className="text-white font-semibold text-xs md:text-sm">{review.avatar}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm md:text-base">{review.name}</span>
-                      {review.verified && <Badge variant="success" className="text-[10px]">Verified</Badge>}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              {filteredReviews.map((review, index) => (
+                <Card
+                  key={review.id}
+                  variant="glass"
+                  className="p-3 md:p-4 lg:p-5 animate-slide-up hover:shadow-glow transition-all duration-300"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br ${getAvatarColor(index)} flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-white font-semibold text-xs md:text-sm">
+                        {review.user_name ? getInitials(review.user_name) : "U"}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
-                      <span>{review.product}</span>
-                      <span>•</span>
-                      <span>{review.date}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm md:text-base">{review.user_name || "Pengguna Premio"}</span>
+                        <Badge variant="success" className="text-[10px]">Verified</Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
+                        <span>{review.product_name}</span>
+                        <span>•</span>
+                        <span>{formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: id })}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex gap-0.5 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted"}`}
-                    />
-                  ))}
-                </div>
+                  <div className="flex gap-0.5 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted"}`}
+                      />
+                    ))}
+                  </div>
 
-                <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-3">{review.content}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-3">{review.content}</p>
 
-                <div className="flex items-center gap-4 pt-2 border-t border-border">
-                  <button className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors">
-                    <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    <span>{review.likes}</span>
-                  </button>
-                  <button className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors">
-                    <MessageCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    <span>Balas</span>
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  <div className="flex items-center gap-4 pt-2 border-t border-border">
+                    <button 
+                      className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors"
+                      onClick={() => likeReview(review.id)}
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      <span>{review.likes}</span>
+                    </button>
+                    <button className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors">
+                      <MessageCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      <span>Balas</span>
+                    </button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
 
-          {filteredReviews.length === 0 && (
+          {!loading && filteredReviews.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground text-sm">Tidak ada ulasan dengan rating ini</p>
             </div>

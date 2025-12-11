@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, CreditCard, Wallet, Building2, Check, ShieldCheck } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, CreditCard, Wallet, Building2, Check, ShieldCheck, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTransactions } from "@/hooks/useTransactions";
 import { toast } from "sonner";
 
 const paymentMethods = [
@@ -21,13 +23,36 @@ function formatPrice(price: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
 }
 
+function getExpiryDate(plan: string) {
+  const now = new Date();
+  switch (plan) {
+    case 'weekly':
+      return new Date(now.setDate(now.getDate() + 7)).toISOString();
+    case 'monthly':
+      return new Date(now.setMonth(now.getMonth() + 1)).toISOString();
+    case 'yearly':
+      return new Date(now.setFullYear(now.getFullYear() + 1)).toISOString();
+    default:
+      return new Date(now.setMonth(now.getMonth() + 1)).toISOString();
+  }
+}
+
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
+  const { createTransaction } = useTransactions();
+  const navigate = useNavigate();
   const [selectedPayment, setSelectedPayment] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(user?.email || "");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCheckout = async () => {
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+      navigate("/auth");
+      return;
+    }
+
     if (!selectedPayment) {
       toast.error("Pilih metode pembayaran");
       return;
@@ -38,11 +63,34 @@ export default function Checkout() {
     }
 
     setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsProcessing(false);
-    clearCart();
-    toast.success("Pembayaran berhasil! Cek email untuk detail aktivasi.");
+
+    try {
+      // Simulate payment processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Create transactions for each item
+      for (const item of items) {
+        await createTransaction({
+          product_id: item.id,
+          product_name: item.name,
+          product_logo: item.logo,
+          product_logo_color: item.logoColor,
+          plan: item.plan,
+          plan_label: item.planLabel,
+          price: item.price,
+          status: 'active',
+          expires_at: getExpiryDate(item.plan)
+        });
+      }
+
+      clearCart();
+      toast.success("Pembayaran berhasil! Cek email untuk detail aktivasi.");
+      navigate("/dashboard/langganan");
+    } catch (error) {
+      toast.error("Terjadi kesalahan. Silakan coba lagi.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (items.length === 0) {
@@ -167,7 +215,14 @@ export default function Checkout() {
                   onClick={handleCheckout}
                   disabled={isProcessing}
                 >
-                  {isProcessing ? "Memproses..." : "Bayar Sekarang"}
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Memproses...
+                    </>
+                  ) : (
+                    "Bayar Sekarang"
+                  )}
                 </Button>
 
                 <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">

@@ -7,6 +7,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationPanel } from "@/components/notifications/NotificationPanel";
 import { cn } from "@/lib/utils";
 import { products } from "@/data/products";
 import { toast } from "sonner";
@@ -26,12 +28,15 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<typeof products>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
   const { totalItems, setIsCartOpen } = useCart();
   const { totalItems: wishlistTotal } = useWishlist();
   const { user, signOut, isLoading } = useAuth();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -60,6 +65,9 @@ export function Navbar() {
         setIsSearchOpen(false);
         setSearchQuery("");
         setSearchResults([]);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setIsNotificationOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -254,11 +262,27 @@ export function Navbar() {
             <div className="hidden md:flex items-center gap-2 ml-1">
               {user ? (
                 <>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 relative">
-                    <Bell className="h-4 w-4" />
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-destructive rounded-full" />
-                  </Button>
-                  <Link to="/dashboard/profil">
+                  {/* Notifications */}
+                  <div ref={notificationRef} className="relative">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-9 w-9 relative"
+                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                    >
+                      <Bell className="h-4 w-4" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-medium">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                    <NotificationPanel 
+                      isOpen={isNotificationOpen} 
+                      onClose={() => setIsNotificationOpen(false)} 
+                    />
+                  </div>
+                  <Link to="/dashboard">
                     <Button variant="ghost" size="sm" className="gap-1.5">
                       <User className="h-4 w-4" />
                       Profil
@@ -274,7 +298,7 @@ export function Navbar() {
                   <Link to="/auth">
                     <Button variant="ghost" size="sm">Masuk</Button>
                   </Link>
-                  <Link to="/auth">
+                  <Link to="/register">
                     <Button variant="premium" size="sm">Daftar</Button>
                   </Link>
                 </>
@@ -315,15 +339,28 @@ export function Navbar() {
               <div className="flex flex-col gap-2 mt-3 px-1">
                 {user ? (
                   <>
-                    <Link to="/dashboard/profil" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link to="/dashboard" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button variant="outline" size="sm" className="w-full gap-1.5">
                         <User className="h-4 w-4" />
-                        Profil
+                        Dashboard
                       </Button>
                     </Link>
-                    <Button variant="outline" size="sm" className="w-full gap-1.5">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full gap-1.5 relative"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsNotificationOpen(true);
+                      }}
+                    >
                       <Bell className="h-4 w-4" />
                       Notifikasi
+                      {unreadCount > 0 && (
+                        <span className="ml-auto px-1.5 py-0.5 bg-destructive text-destructive-foreground text-[10px] rounded-full">
+                          {unreadCount}
+                        </span>
+                      )}
                     </Button>
                     <Button variant="destructive" size="sm" className="w-full gap-1.5" onClick={handleLogout}>
                       <LogOut className="h-4 w-4" />
@@ -335,7 +372,7 @@ export function Navbar() {
                     <Link to="/auth" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button variant="outline" size="sm" className="w-full">Masuk</Button>
                     </Link>
-                    <Link to="/auth" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link to="/register" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button variant="premium" size="sm" className="w-full">Daftar</Button>
                     </Link>
                   </div>

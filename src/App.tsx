@@ -37,7 +37,7 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Auth />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/register" element={<Register />} />
+                  <Route path="/register" element={<Auth defaultMode="register" />} />
                   <Route path="/produk" element={<Products />} />
                   <Route path="/produk/:id" element={<ProductDetail />} />
                   <Route path="/kategori" element={<Categories />} />
