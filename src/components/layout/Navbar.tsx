@@ -187,22 +187,6 @@ export function Navbar() {
                       />
                     </div>
                   </form>
-                  {searchQuery.length === 0 && (
-                    <div className="border-t border-border p-3">
-                      <p className="text-xs text-muted-foreground mb-2">Saran Pencarian</p>
-                      <div className="flex flex-wrap gap-2">
-                        {["Netflix", "Canva", "Spotify", "Adobe"].map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            onClick={() => handleSearch(suggestion)}
-                            className="px-3 py-1.5 text-xs bg-muted hover:bg-primary/10 hover:text-primary rounded-full transition-colors"
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   {searchResults.length > 0 && (
                     <div className="border-t border-border max-h-64 overflow-y-auto">
                       {searchResults.map((product, index) => (
@@ -259,7 +243,7 @@ export function Navbar() {
               )}
             </Button>
 
-            <div className="hidden md:flex items-center gap-2 ml-1">
+            <div className="hidden md:flex items-center gap-2 ml-1 relative z-50">
               {user ? (
                 <>
                   {/* Notifications */}
@@ -282,13 +266,18 @@ export function Navbar() {
                       onClose={() => setIsNotificationOpen(false)} 
                     />
                   </div>
-                  <Link to="/dashboard">
+                  <Link to="/dashboard" className="relative z-50">
                     <Button variant="ghost" size="sm" className="gap-1.5">
                       <User className="h-4 w-4" />
                       Profil
                     </Button>
                   </Link>
-                  <Button variant="outline" size="sm" onClick={handleLogout} className="gap-1.5">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleLogout} 
+                    className="gap-1.5 relative z-50 cursor-pointer"
+                  >
                     <LogOut className="h-4 w-4" />
                     Logout
                   </Button>

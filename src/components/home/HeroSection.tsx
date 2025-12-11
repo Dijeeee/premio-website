@@ -97,25 +97,9 @@ export function HeroSection() {
               </div>
             </form>
 
-            {/* Search Suggestions & Results - contained within search area */}
-            {isSearchFocused && (searchQuery.length > 0 || searchResults.length > 0 || searchQuery.length === 0) && (
+            {/* Search Results - only show when there's a query */}
+            {isSearchFocused && searchQuery.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-20 animate-scale-in max-h-72">
-                {searchQuery.length === 0 && (
-                  <div className="p-3">
-                    <p className="text-xs text-muted-foreground mb-2">Saran Pencarian</p>
-                    <div className="flex flex-wrap gap-2">
-                      {["Netflix", "Canva", "Spotify", "ChatGPT", "Adobe"].map((suggestion) => (
-                        <button
-                          key={suggestion}
-                          onClick={() => handleSearchChange(suggestion)}
-                          className="px-3 py-1.5 text-xs bg-muted hover:bg-primary/10 hover:text-primary rounded-full transition-colors"
-                        >
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 {searchResults.length > 0 && (
                   <div className="max-h-56 overflow-y-auto">
                     {searchResults.map((product) => (
@@ -135,7 +119,7 @@ export function HeroSection() {
                     ))}
                   </div>
                 )}
-                {searchQuery && searchResults.length === 0 && (
+                {searchResults.length === 0 && (
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     Tidak ada hasil untuk "{searchQuery}"
                   </div>
