@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import premioLogo from "@/assets/premio-logo.png";
 
 const footerLinks = {
   produk: [
@@ -42,9 +43,7 @@ export function Footer() {
           {/* Brand Section */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">P</span>
-              </div>
+              <img src={premioLogo} alt="Premio" className="w-9 h-9 object-contain" />
               <span className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Premio</span>
             </Link>
             <p className="text-muted-foreground text-sm mb-4 max-w-xs">

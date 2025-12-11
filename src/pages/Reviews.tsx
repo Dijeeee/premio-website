@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { products } from "@/data/products";
 import { useReviews } from "@/hooks/useReviews";
+import { useWebsiteReviews } from "@/hooks/useWebsiteReviews";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
@@ -28,15 +30,26 @@ const avatarColors = [
 
 export default function Reviews() {
   const { user } = useAuth();
-  const { 
+  const {
     reviews, 
-    loading, 
+    loading: productLoading, 
     createReview, 
     likeReview, 
     getAverageRating,
     getRatingDistribution,
     getSatisfactionPercentage
   } = useReviews();
+  const {
+    reviews: websiteReviews,
+    loading: websiteLoading,
+    createReview: createWebsiteReview,
+    likeReview: likeWebsiteReview,
+    getAverageRating: getWebsiteAvgRating,
+    getRatingDistribution: getWebsiteRatingDistribution,
+    getSatisfactionPercentage: getWebsiteSatisfaction
+  } = useWebsiteReviews();
+
+  const [activeTab, setActiveTab] = useState("website");
   const [filter, setFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRating, setNewRating] = useState(5);
@@ -44,7 +57,7 @@ export default function Reviews() {
   const [selectedProduct, setSelectedProduct] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmitReview = async () => {
+  const handleSubmitProductReview = async () => {
     if (!user) {
       toast.error("Silakan login terlebih dahulu");
       return;
@@ -72,10 +85,32 @@ export default function Reviews() {
     setIsSubmitting(false);
   };
 
-  const filteredReviews = reviews.filter((r) => filter === "all" || r.rating.toString() === filter);
-  const avgRating = getAverageRating();
-  const ratingDistribution = getRatingDistribution;
-  const satisfactionPercentage = getSatisfactionPercentage;
+  const handleSubmitWebsiteReview = async () => {
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+      return;
+    }
+
+    if (!newReview.trim()) {
+      toast.error("Mohon isi ulasan Anda");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    await createWebsiteReview({
+      rating: newRating,
+      content: newReview
+    });
+
+    setIsDialogOpen(false);
+    setNewReview("");
+    setNewRating(5);
+    setIsSubmitting(false);
+  };
+
+  const filteredProductReviews = reviews.filter((r) => filter === "all" || r.rating.toString() === filter);
+  const filteredWebsiteReviews = websiteReviews.filter((r) => filter === "all" || r.rating.toString() === filter);
 
   const getAvatarColor = (index: number) => avatarColors[index % avatarColors.length];
   const getInitials = (name: string) => {
@@ -86,11 +121,93 @@ export default function Reviews() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const stats = [
-    { value: avgRating || "0.0", label: "Rating" },
-    { value: `${reviews.length}`, label: "Reviews" },
-    { value: `${satisfactionPercentage}%`, label: "Puas" },
-  ];
+  const renderStats = (avgRating: string, reviewCount: number, satisfaction: number, distribution: { rating: number; count: number; percentage: number }[]) => (
+    <Card variant="glass" className="p-4 md:p-6 mb-6">
+      <div className="grid grid-cols-3 gap-4 text-center mb-6">
+        <div>
+          <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{avgRating || "0.0"}</div>
+          <div className="text-[10px] md:text-xs lg:text-sm text-muted-foreground">Rating</div>
+        </div>
+        <div>
+          <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{reviewCount}</div>
+          <div className="text-[10px] md:text-xs lg:text-sm text-muted-foreground">Reviews</div>
+        </div>
+        <div>
+          <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{satisfaction}%</div>
+          <div className="text-[10px] md:text-xs lg:text-sm text-muted-foreground">Puas</div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        {distribution.map((item) => (
+          <div key={item.rating} className="flex items-center gap-2">
+            <span className="text-xs w-8 flex items-center gap-0.5">
+              {item.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            </span>
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                style={{ width: `${item.percentage}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground w-12 text-right">{item.percentage}%</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+
+  const renderReviewCard = (review: any, index: number, isWebsite: boolean, onLike: (id: string) => void) => (
+    <Card
+      key={review.id}
+      variant="glass"
+      className="p-3 md:p-4 lg:p-5 animate-slide-up hover:shadow-glow transition-all duration-300"
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
+      <div className="flex items-start gap-3 mb-3">
+        <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br ${getAvatarColor(index)} flex items-center justify-center flex-shrink-0`}>
+          <span className="text-white font-semibold text-xs md:text-sm">
+            {review.user_name ? getInitials(review.user_name) : "U"}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-sm md:text-base">{review.user_name || "Pengguna"}</span>
+            <Badge variant="success" className="text-[10px]">Verified</Badge>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
+            {!isWebsite && <><span>{review.product_name}</span><span>•</span></>}
+            <span>{formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: id })}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-0.5 mb-2">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted"}`}
+          />
+        ))}
+      </div>
+
+      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-3">{review.content}</p>
+
+      <div className="flex items-center gap-4 pt-2 border-t border-border">
+        <button 
+          className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors"
+          onClick={() => onLike(review.id)}
+        >
+          <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <span>{review.likes}</span>
+        </button>
+        <button className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors">
+          <MessageCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <span>Balas</span>
+        </button>
+      </div>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen">
@@ -101,7 +218,7 @@ export default function Reviews() {
           <div className="py-4 md:py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
-                Ulasan <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Pelanggan</span>
+                Ulasan <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Premio</span>
               </h1>
               <p className="text-sm md:text-base text-muted-foreground">Apa kata mereka tentang Premio</p>
             </div>
@@ -114,29 +231,33 @@ export default function Reviews() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-md mx-4">
                 <DialogHeader>
-                  <DialogTitle>Tambah Ulasan</DialogTitle>
+                  <DialogTitle>
+                    {activeTab === "website" ? "Ulasan Website Premio" : "Ulasan Produk"}
+                  </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Pilih Produk</label>
-                    <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Pilih aplikasi yang dibeli" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.name}>
-                            <div className="flex items-center gap-2">
-                              <div className={`w-6 h-6 rounded bg-gradient-to-br ${product.logoColor} flex items-center justify-center`}>
-                                <span className="text-white text-[10px] font-bold">{product.logo}</span>
+                  {activeTab === "produk" && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Pilih Produk</label>
+                      <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Pilih aplikasi yang dibeli" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.name}>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-6 h-6 rounded bg-gradient-to-br ${product.logoColor} flex items-center justify-center`}>
+                                  <span className="text-white text-[10px] font-bold">{product.logo}</span>
+                                </div>
+                                <span>{product.name}</span>
                               </div>
-                              <span>{product.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div>
                     <label className="text-sm font-medium mb-2 block">Rating</label>
                     <div className="flex gap-1">
@@ -149,12 +270,17 @@ export default function Reviews() {
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-2 block">Ulasan</label>
-                    <Textarea placeholder="Bagikan pengalaman Anda..." value={newReview} onChange={(e) => setNewReview(e.target.value)} rows={4} />
+                    <Textarea 
+                      placeholder={activeTab === "website" ? "Bagikan pengalaman Anda dengan Website Premio..." : "Bagikan pengalaman Anda..."} 
+                      value={newReview} 
+                      onChange={(e) => setNewReview(e.target.value)} 
+                      rows={4} 
+                    />
                   </div>
                   <Button 
                     variant="premium" 
                     className="w-full" 
-                    onClick={handleSubmitReview}
+                    onClick={activeTab === "website" ? handleSubmitWebsiteReview : handleSubmitProductReview}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
@@ -167,122 +293,107 @@ export default function Reviews() {
             </Dialog>
           </div>
 
-          {/* Stats */}
-          <Card variant="glass" className="p-4 md:p-6 mb-6">
-            <div className="grid grid-cols-3 gap-4 text-center mb-6">
-              {stats.map((stat, i) => (
-                <div key={i}>
-                  <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</div>
-                  <div className="text-[10px] md:text-xs lg:text-sm text-muted-foreground">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Rating Distribution */}
-            <div className="space-y-2">
-              {ratingDistribution.map((item) => (
-                <div key={item.rating} className="flex items-center gap-2">
-                  <span className="text-xs w-8 flex items-center gap-0.5">
-                    {item.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  </span>
-                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
-                      style={{ width: `${item.percentage}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground w-12 text-right">{item.percentage}%</span>
-                </div>
-              ))}
-            </div>
-          </Card>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="website">Website Premio</TabsTrigger>
+              <TabsTrigger value="produk">Ulasan Produk</TabsTrigger>
+            </TabsList>
 
-          {/* Filter */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-            {["all", "5", "4", "3", "2", "1"].map((f) => (
-              <Button
-                key={f}
-                variant={filter === f ? "premium" : "outline"}
-                size="sm"
-                onClick={() => setFilter(f)}
-                className="whitespace-nowrap flex-shrink-0"
-              >
-                {f === "all" ? "Semua" : (
-                  <span className="flex items-center gap-1">
-                    {f} <Star className="h-3 w-3 fill-current" />
-                  </span>
-                )}
-              </Button>
-            ))}
-          </div>
+            {/* Website Reviews Tab */}
+            <TabsContent value="website">
+              {renderStats(
+                getWebsiteAvgRating(),
+                websiteReviews.length,
+                getWebsiteSatisfaction,
+                getWebsiteRatingDistribution
+              )}
 
-          {/* Reviews Grid */}
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              {filteredReviews.map((review, index) => (
-                <Card
-                  key={review.id}
-                  variant="glass"
-                  className="p-3 md:p-4 lg:p-5 animate-slide-up hover:shadow-glow transition-all duration-300"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br ${getAvatarColor(index)} flex items-center justify-center flex-shrink-0`}>
-                      <span className="text-white font-semibold text-xs md:text-sm">
-                        {review.user_name ? getInitials(review.user_name) : "U"}
+              {/* Filter */}
+              <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                {["all", "5", "4", "3", "2", "1"].map((f) => (
+                  <Button
+                    key={f}
+                    variant={filter === f ? "premium" : "outline"}
+                    size="sm"
+                    onClick={() => setFilter(f)}
+                    className="whitespace-nowrap flex-shrink-0"
+                  >
+                    {f === "all" ? "Semua" : (
+                      <span className="flex items-center gap-1">
+                        {f} <Star className="h-3 w-3 fill-current" />
                       </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm md:text-base">{review.user_name || "Pengguna"}</span>
-                        <Badge variant="success" className="text-[10px]">Verified</Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
-                        <span>{review.product_name}</span>
-                        <span>•</span>
-                        <span>{formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: id })}</span>
-                      </div>
-                    </div>
-                  </div>
+                    )}
+                  </Button>
+                ))}
+              </div>
 
-                  <div className="flex gap-0.5 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted"}`}
-                      />
-                    ))}
-                  </div>
+              {websiteLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                  {filteredWebsiteReviews.map((review, index) => 
+                    renderReviewCard(review, index, true, likeWebsiteReview)
+                  )}
+                </div>
+              )}
 
-                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-3">{review.content}</p>
+              {!websiteLoading && filteredWebsiteReviews.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground text-sm">Tidak ada ulasan dengan rating ini</p>
+                </div>
+              )}
+            </TabsContent>
 
-                  <div className="flex items-center gap-4 pt-2 border-t border-border">
-                    <button 
-                      className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors"
-                      onClick={() => likeReview(review.id)}
-                    >
-                      <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                      <span>{review.likes}</span>
-                    </button>
-                    <button className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors">
-                      <MessageCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                      <span>Balas</span>
-                    </button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+            {/* Product Reviews Tab */}
+            <TabsContent value="produk">
+              {renderStats(
+                getAverageRating(),
+                reviews.length,
+                getSatisfactionPercentage,
+                getRatingDistribution
+              )}
 
-          {!loading && filteredReviews.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm">Tidak ada ulasan dengan rating ini</p>
-            </div>
-          )}
+              {/* Filter */}
+              <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                {["all", "5", "4", "3", "2", "1"].map((f) => (
+                  <Button
+                    key={f}
+                    variant={filter === f ? "premium" : "outline"}
+                    size="sm"
+                    onClick={() => setFilter(f)}
+                    className="whitespace-nowrap flex-shrink-0"
+                  >
+                    {f === "all" ? "Semua" : (
+                      <span className="flex items-center gap-1">
+                        {f} <Star className="h-3 w-3 fill-current" />
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+
+              {productLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                  {filteredProductReviews.map((review, index) => 
+                    renderReviewCard(review, index, false, likeReview)
+                  )}
+                </div>
+              )}
+
+              {!productLoading && filteredProductReviews.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground text-sm">Tidak ada ulasan dengan rating ini</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       <Footer />

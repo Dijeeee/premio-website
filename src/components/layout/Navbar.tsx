@@ -19,8 +19,7 @@ const navLinks = [
   { href: "/kategori", label: "Kategori" },
   { href: "/produk", label: "Produk" },
   { href: "/wishlist", label: "Wishlist" },
-  { href: "/review", label: "Review Produk" },
-  { href: "/website-review", label: "Review Website" },
+  { href: "/review", label: "Review" },
 ];
 
 export function Navbar() {
