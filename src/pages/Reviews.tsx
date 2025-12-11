@@ -28,7 +28,15 @@ const avatarColors = [
 
 export default function Reviews() {
   const { user } = useAuth();
-  const { reviews, loading, createReview, likeReview, getAverageRating } = useReviews();
+  const { 
+    reviews, 
+    loading, 
+    createReview, 
+    likeReview, 
+    getAverageRating,
+    getRatingDistribution,
+    getSatisfactionPercentage
+  } = useReviews();
   const [filter, setFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRating, setNewRating] = useState(5);
@@ -66,6 +74,8 @@ export default function Reviews() {
 
   const filteredReviews = reviews.filter((r) => filter === "all" || r.rating.toString() === filter);
   const avgRating = getAverageRating();
+  const ratingDistribution = getRatingDistribution;
+  const satisfactionPercentage = getSatisfactionPercentage;
 
   const getAvatarColor = (index: number) => avatarColors[index % avatarColors.length];
   const getInitials = (name: string) => {
@@ -77,9 +87,9 @@ export default function Reviews() {
   };
 
   const stats = [
-    { value: avgRating || "5.0", label: "Rating" },
+    { value: avgRating || "0.0", label: "Rating" },
     { value: `${reviews.length}`, label: "Reviews" },
-    { value: "99%", label: "Puas" },
+    { value: `${satisfactionPercentage}%`, label: "Puas" },
   ];
 
   return (
@@ -159,11 +169,29 @@ export default function Reviews() {
 
           {/* Stats */}
           <Card variant="glass" className="p-4 md:p-6 mb-6">
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-4 text-center mb-6">
               {stats.map((stat, i) => (
                 <div key={i}>
                   <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</div>
                   <div className="text-[10px] md:text-xs lg:text-sm text-muted-foreground">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Rating Distribution */}
+            <div className="space-y-2">
+              {ratingDistribution.map((item) => (
+                <div key={item.rating} className="flex items-center gap-2">
+                  <span className="text-xs w-8 flex items-center gap-0.5">
+                    {item.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  </span>
+                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                      style={{ width: `${item.percentage}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground w-12 text-right">{item.percentage}%</span>
                 </div>
               ))}
             </div>
