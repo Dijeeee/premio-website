@@ -97,9 +97,9 @@ export function HeroSection() {
               </div>
             </form>
 
-            {/* Search Suggestions & Results */}
-            {isSearchFocused && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-scale-in">
+            {/* Search Suggestions & Results - contained within search area */}
+            {isSearchFocused && (searchQuery.length > 0 || searchResults.length > 0 || searchQuery.length === 0) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-20 animate-scale-in max-h-72">
                 {searchQuery.length === 0 && (
                   <div className="p-3">
                     <p className="text-xs text-muted-foreground mb-2">Saran Pencarian</p>
@@ -117,7 +117,7 @@ export function HeroSection() {
                   </div>
                 )}
                 {searchResults.length > 0 && (
-                  <div className="max-h-64 overflow-y-auto">
+                  <div className="max-h-56 overflow-y-auto">
                     {searchResults.map((product) => (
                       <button
                         key={product.id}
