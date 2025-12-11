@@ -10,6 +10,7 @@ export interface WebsiteReview {
   rating: number;
   content: string;
   likes: number | null;
+  dislikes: number | null;
   created_at: string;
   updated_at: string;
 }

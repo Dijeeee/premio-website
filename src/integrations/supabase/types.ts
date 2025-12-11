@@ -83,6 +83,33 @@ export type Database = {
         }
         Relationships: []
       }
+      review_likes: {
+        Row: {
+          created_at: string
+          id: string
+          is_like: boolean
+          is_website_review: boolean
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_like?: boolean
+          is_website_review?: boolean
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_like?: boolean
+          is_website_review?: boolean
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       review_replies: {
         Row: {
           content: string
@@ -122,6 +149,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          dislikes: number | null
           id: string
           likes: number | null
           product_id: string
@@ -133,6 +161,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          dislikes?: number | null
           id?: string
           likes?: number | null
           product_id: string
@@ -144,6 +173,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          dislikes?: number | null
           id?: string
           likes?: number | null
           product_id?: string
@@ -259,6 +289,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          dislikes: number | null
           id: string
           likes: number | null
           rating: number
@@ -269,6 +300,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          dislikes?: number | null
           id?: string
           likes?: number | null
           rating: number
@@ -279,6 +311,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          dislikes?: number | null
           id?: string
           likes?: number | null
           rating?: number

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Star, ThumbsUp, MessageCircle, Plus, Loader2, Send, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Star, ThumbsUp, ThumbsDown, MessageCircle, Plus, Loader2, Send, X } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
@@ -67,6 +67,8 @@ export default function Reviews() {
   const [newReview, setNewReview] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userHasReview, setUserHasReview] = useState({ product: false, website: false });
+  const [userLikes, setUserLikes] = useState<Record<string, { isLike: boolean | null }>>({});
   
   // Reply state
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -74,6 +76,72 @@ export default function Reviews() {
   const [replies, setReplies] = useState<Record<string, Reply[]>>({});
   const [websiteReplies, setWebsiteReplies] = useState<Record<string, Reply[]>>({});
   const [loadingReplies, setLoadingReplies] = useState<Record<string, boolean>>({});
+
+  // Check if user already has a review
+  useEffect(() => {
+    const checkUserReviews = async () => {
+      if (!user) return;
+      
+      // Check product reviews
+      const { data: productReview } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      
+      // Check website reviews
+      const { data: websiteReview } = await supabase
+        .from('website_reviews')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      
+      setUserHasReview({
+        product: (productReview?.length || 0) > 0,
+        website: (websiteReview?.length || 0) > 0
+      });
+    };
+    
+    checkUserReviews();
+  }, [user, reviews, websiteReviews]);
+
+  // Fetch user likes
+  useEffect(() => {
+    const fetchUserLikes = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('review_likes')
+        .select('review_id, is_like, is_website_review')
+        .eq('user_id', user.id);
+      
+      if (data) {
+        const likesMap: Record<string, { isLike: boolean | null }> = {};
+        data.forEach(item => {
+          likesMap[item.review_id] = { isLike: item.is_like };
+        });
+        setUserLikes(likesMap);
+      }
+    };
+    
+    fetchUserLikes();
+    
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('review_likes_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'review_likes'
+      }, () => {
+        fetchUserLikes();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const fetchReplies = async (reviewId: string, isWebsite: boolean) => {
     const tableName = isWebsite ? 'website_review_replies' : 'review_replies';
@@ -138,6 +206,12 @@ export default function Reviews() {
       return;
     }
 
+    if (userHasReview.product) {
+      toast.error("Anda sudah memberikan ulasan produk. Setiap akun hanya bisa memberikan 1 ulasan.");
+      setIsDialogOpen(false);
+      return;
+    }
+
     if (!newReview.trim() || !selectedProduct) {
       toast.error("Mohon lengkapi semua field");
       return;
@@ -153,6 +227,7 @@ export default function Reviews() {
       content: newReview
     });
 
+    setUserHasReview(prev => ({ ...prev, product: true }));
     setIsDialogOpen(false);
     setNewReview("");
     setSelectedProduct("");
@@ -163,6 +238,12 @@ export default function Reviews() {
   const handleSubmitWebsiteReview = async () => {
     if (!user) {
       toast.error("Silakan login terlebih dahulu");
+      return;
+    }
+
+    if (userHasReview.website) {
+      toast.error("Anda sudah memberikan ulasan website. Setiap akun hanya bisa memberikan 1 ulasan.");
+      setIsDialogOpen(false);
       return;
     }
 
@@ -178,10 +259,78 @@ export default function Reviews() {
       content: newReview
     });
 
+    setUserHasReview(prev => ({ ...prev, website: true }));
     setIsDialogOpen(false);
     setNewReview("");
     setNewRating(5);
     setIsSubmitting(false);
+  };
+
+  const handleLikeDislike = async (reviewId: string, isWebsite: boolean, isLike: boolean) => {
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+      return;
+    }
+
+    const currentLike = userLikes[reviewId];
+    const tableName = isWebsite ? 'website_reviews' : 'reviews';
+    
+    try {
+      if (currentLike?.isLike === isLike) {
+        // Remove like/dislike
+        await supabase.from('review_likes').delete()
+          .eq('review_id', reviewId)
+          .eq('user_id', user.id);
+        
+        // Update count
+        if (isLike) {
+          await supabase.from(tableName).update({ likes: Math.max(0, (isWebsite ? websiteReviews : reviews).find(r => r.id === reviewId)?.likes - 1 || 0) }).eq('id', reviewId);
+        } else {
+          await supabase.from(tableName).update({ dislikes: Math.max(0, (isWebsite ? websiteReviews : reviews).find(r => r.id === reviewId)?.dislikes - 1 || 0) }).eq('id', reviewId);
+        }
+        
+        setUserLikes(prev => {
+          const newLikes = { ...prev };
+          delete newLikes[reviewId];
+          return newLikes;
+        });
+      } else {
+        // Upsert like/dislike
+        await supabase.from('review_likes').upsert({
+          review_id: reviewId,
+          user_id: user.id,
+          is_website_review: isWebsite,
+          is_like: isLike
+        }, { onConflict: 'review_id,user_id,is_website_review' });
+        
+        const currentReview = (isWebsite ? websiteReviews : reviews).find(r => r.id === reviewId);
+        
+        // Update counts based on previous state
+        if (currentLike?.isLike === true && !isLike) {
+          // Was like, now dislike
+          await supabase.from(tableName).update({ 
+            likes: Math.max(0, (currentReview?.likes || 1) - 1),
+            dislikes: (currentReview?.dislikes || 0) + 1 
+          }).eq('id', reviewId);
+        } else if (currentLike?.isLike === false && isLike) {
+          // Was dislike, now like
+          await supabase.from(tableName).update({ 
+            likes: (currentReview?.likes || 0) + 1,
+            dislikes: Math.max(0, (currentReview?.dislikes || 1) - 1)
+          }).eq('id', reviewId);
+        } else if (isLike) {
+          // New like
+          await supabase.from(tableName).update({ likes: (currentReview?.likes || 0) + 1 }).eq('id', reviewId);
+        } else {
+          // New dislike
+          await supabase.from(tableName).update({ dislikes: (currentReview?.dislikes || 0) + 1 }).eq('id', reviewId);
+        }
+        
+        setUserLikes(prev => ({ ...prev, [reviewId]: { isLike } }));
+      }
+    } catch (error) {
+      toast.error("Gagal memproses");
+    }
   };
 
   const filteredProductReviews = reviews.filter((r) => filter === "all" || r.rating.toString() === filter);
@@ -232,10 +381,11 @@ export default function Reviews() {
     </Card>
   );
 
-  const renderReviewCard = (review: any, index: number, isWebsite: boolean, onLike: (id: string) => void) => {
+  const renderReviewCard = (review: any, index: number, isWebsite: boolean) => {
     const reviewReplies = isWebsite ? websiteReplies[review.id] : replies[review.id];
     const isLoadingReplies = loadingReplies[review.id];
     const isReplying = replyingTo === review.id;
+    const currentUserLike = userLikes[review.id];
 
     return (
       <Card
@@ -275,11 +425,18 @@ export default function Reviews() {
 
         <div className="flex items-center gap-4 pt-2 border-t border-border">
           <button 
-            className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors"
-            onClick={() => onLike(review.id)}
+            className={`flex items-center gap-1.5 text-[10px] md:text-xs transition-colors ${currentUserLike?.isLike === true ? 'text-primary' : 'text-muted-foreground hover:text-primary'}`}
+            onClick={() => handleLikeDislike(review.id, isWebsite, true)}
           >
-            <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
-            <span>{review.likes}</span>
+            <ThumbsUp className={`h-3.5 w-3.5 md:h-4 md:w-4 ${currentUserLike?.isLike === true ? 'fill-primary' : ''}`} />
+            <span>{review.likes || 0}</span>
+          </button>
+          <button 
+            className={`flex items-center gap-1.5 text-[10px] md:text-xs transition-colors ${currentUserLike?.isLike === false ? 'text-destructive' : 'text-muted-foreground hover:text-destructive'}`}
+            onClick={() => handleLikeDislike(review.id, isWebsite, false)}
+          >
+            <ThumbsDown className={`h-3.5 w-3.5 md:h-4 md:w-4 ${currentUserLike?.isLike === false ? 'fill-destructive' : ''}`} />
+            <span>{review.dislikes || 0}</span>
           </button>
           <button 
             className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors"
@@ -498,7 +655,7 @@ export default function Reviews() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   {filteredWebsiteReviews.map((review, index) => 
-                    renderReviewCard(review, index, true, likeWebsiteReview)
+                    renderReviewCard(review, index, true)
                   )}
                 </div>
               )}
@@ -545,7 +702,7 @@ export default function Reviews() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   {filteredProductReviews.map((review, index) => 
-                    renderReviewCard(review, index, false, likeReview)
+                    renderReviewCard(review, index, false)
                   )}
                 </div>
               )}

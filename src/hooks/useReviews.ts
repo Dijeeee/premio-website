@@ -11,6 +11,7 @@ export interface Review {
   rating: number;
   content: string;
   likes: number;
+  dislikes: number;
   created_at: string;
   updated_at: string;
   user_name?: string;
