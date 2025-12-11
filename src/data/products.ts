@@ -164,7 +164,7 @@ export const products: Product[] = [
     rating: 4.9, 
     downloads: "32K+", 
     prices: { weekly: 45000, monthly: 160000, yearly: 1600000 },
-    originalPrices: { weekly: 80000, monthly: 290000, ylabel: 2900000 },
+    originalPrices: { weekly: 80000, monthly: 290000, yearly: 2900000 },
     discount: 45,
     popular: true 
   },
