@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationPanel } from "@/components/notifications/NotificationPanel";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { DashboardHome } from "./dashboard/DashboardHome";
@@ -42,11 +44,25 @@ const sidebarLinks = [
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
   const { totalItems } = useCart();
   const { user, isLoading, signOut } = useAuth();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Close notification panel on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setIsNotificationOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Determine current page from URL
   const getCurrentPage = () => {
@@ -180,10 +196,25 @@ export default function Dashboard() {
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-destructive rounded-full" />
-            </Button>
+            <div ref={notificationRef} className="relative">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 relative"
+                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-medium">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Button>
+              <NotificationPanel 
+                isOpen={isNotificationOpen} 
+                onClose={() => setIsNotificationOpen(false)} 
+              />
+            </div>
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
               <span className="text-primary-foreground font-semibold text-xs">{userName.substring(0, 2).toUpperCase()}</span>
             </div>
