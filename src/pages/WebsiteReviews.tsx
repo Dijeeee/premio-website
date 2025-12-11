@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { products } from "@/data/products";
-import { useReviews } from "@/hooks/useReviews";
+import { useWebsiteReviews } from "@/hooks/useWebsiteReviews";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
+import premioLogo from "@/assets/premio-logo.png";
 
 const avatarColors = [
   "from-pink-500 to-rose-500",
@@ -26,7 +25,7 @@ const avatarColors = [
   "from-cyan-500 to-blue-500",
 ];
 
-export default function Reviews() {
+export default function WebsiteReviews() {
   const { user } = useAuth();
   const { 
     reviews, 
@@ -36,12 +35,11 @@ export default function Reviews() {
     getAverageRating,
     getRatingDistribution,
     getSatisfactionPercentage
-  } = useReviews();
+  } = useWebsiteReviews();
   const [filter, setFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRating, setNewRating] = useState(5);
   const [newReview, setNewReview] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmitReview = async () => {
@@ -50,24 +48,20 @@ export default function Reviews() {
       return;
     }
 
-    if (!newReview.trim() || !selectedProduct) {
-      toast.error("Mohon lengkapi semua field");
+    if (!newReview.trim()) {
+      toast.error("Mohon isi ulasan Anda");
       return;
     }
 
     setIsSubmitting(true);
-    const product = products.find(p => p.name === selectedProduct);
     
     await createReview({
-      product_id: product?.id || selectedProduct,
-      product_name: selectedProduct,
       rating: newRating,
       content: newReview
     });
 
     setIsDialogOpen(false);
     setNewReview("");
-    setSelectedProduct("");
     setNewRating(5);
     setIsSubmitting(false);
   };
@@ -99,44 +93,27 @@ export default function Reviews() {
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="py-4 md:py-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
-                Ulasan <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Pelanggan</span>
-              </h1>
-              <p className="text-sm md:text-base text-muted-foreground">Apa kata mereka tentang Premio</p>
+            <div className="flex items-center gap-4">
+              <img src={premioLogo} alt="Premio" className="w-12 h-12 md:w-16 md:h-16 object-contain" />
+              <div>
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-1">
+                  Ulasan <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Website Premio</span>
+                </h1>
+                <p className="text-sm md:text-base text-muted-foreground">Apa kata mereka tentang Website Premio</p>
+              </div>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="premium" className="gap-2 w-full md:w-auto">
                   <Plus className="h-4 w-4" />
-                  Tambah Rating
+                  Tambah Ulasan
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md mx-4">
                 <DialogHeader>
-                  <DialogTitle>Tambah Ulasan</DialogTitle>
+                  <DialogTitle>Ulasan Website Premio</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Pilih Produk</label>
-                    <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Pilih aplikasi yang dibeli" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.name}>
-                            <div className="flex items-center gap-2">
-                              <div className={`w-6 h-6 rounded bg-gradient-to-br ${product.logoColor} flex items-center justify-center`}>
-                                <span className="text-white text-[10px] font-bold">{product.logo}</span>
-                              </div>
-                              <span>{product.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div>
                     <label className="text-sm font-medium mb-2 block">Rating</label>
                     <div className="flex gap-1">
@@ -149,7 +126,7 @@ export default function Reviews() {
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-2 block">Ulasan</label>
-                    <Textarea placeholder="Bagikan pengalaman Anda..." value={newReview} onChange={(e) => setNewReview(e.target.value)} rows={4} />
+                    <Textarea placeholder="Bagikan pengalaman Anda menggunakan Website Premio..." value={newReview} onChange={(e) => setNewReview(e.target.value)} rows={4} />
                   </div>
                   <Button 
                     variant="premium" 
@@ -242,7 +219,7 @@ export default function Reviews() {
                         <Badge variant="success" className="text-[10px]">Verified</Badge>
                       </div>
                       <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
-                        <span>{review.product_name}</span>
+                        <span>Website Premio</span>
                         <span>•</span>
                         <span>{formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: id })}</span>
                       </div>

@@ -3,17 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-export interface Review {
+export interface WebsiteReview {
   id: string;
   user_id: string;
-  product_id: string;
-  product_name: string;
+  user_name: string | null;
   rating: number;
   content: string;
-  likes: number;
+  likes: number | null;
   created_at: string;
   updated_at: string;
-  user_name?: string;
 }
 
 export interface RatingDistribution {
@@ -22,39 +20,22 @@ export interface RatingDistribution {
   percentage: number;
 }
 
-export function useReviews() {
+export function useWebsiteReviews() {
   const { user } = useAuth();
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<WebsiteReview[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchReviews = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('reviews')
+        .from('website_reviews')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Fetch user profiles for each review
-      const reviewsWithProfiles = await Promise.all(
-        (data || []).map(async (review) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('user_id', review.user_id)
-            .maybeSingle();
-          
-          return {
-            ...review,
-            user_name: profile?.full_name || null
-          };
-        })
-      );
-      
-      setReviews(reviewsWithProfiles);
+      setReviews(data || []);
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      console.error('Error fetching website reviews:', error);
     } finally {
       setLoading(false);
     }
@@ -63,15 +44,14 @@ export function useReviews() {
   useEffect(() => {
     fetchReviews();
     
-    // Subscribe to realtime changes
     const channel = supabase
-      .channel('reviews-realtime')
+      .channel('website-reviews-realtime')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'reviews'
+          table: 'website_reviews'
         },
         () => {
           fetchReviews();
@@ -85,8 +65,6 @@ export function useReviews() {
   }, [fetchReviews]);
 
   const createReview = async (review: {
-    product_id: string;
-    product_name: string;
     rating: number;
     content: string;
   }) => {
@@ -96,11 +74,19 @@ export function useReviews() {
     }
 
     try {
+      // Get user profile for name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
       const { error } = await supabase
-        .from('reviews')
+        .from('website_reviews')
         .insert({
           ...review,
           user_id: user.id,
+          user_name: profile?.full_name || user.email?.split('@')[0] || 'Pengguna',
           likes: 0
         });
 
@@ -114,32 +100,12 @@ export function useReviews() {
     }
   };
 
-  const updateReview = async (reviewId: string, updates: Partial<Review>) => {
-    if (!user) return { error: new Error('Not authenticated') };
-
-    try {
-      const { error } = await supabase
-        .from('reviews')
-        .update(updates)
-        .eq('id', reviewId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      
-      toast.success('Review berhasil diperbarui');
-      return { error: null };
-    } catch (error: any) {
-      toast.error('Gagal memperbarui review');
-      return { error };
-    }
-  };
-
   const deleteReview = async (reviewId: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
     try {
       const { error } = await supabase
-        .from('reviews')
+        .from('website_reviews')
         .delete()
         .eq('id', reviewId)
         .eq('user_id', user.id);
@@ -154,26 +120,10 @@ export function useReviews() {
     }
   };
 
-  // Like review - optimistic update (actual persistence would need an RPC function)
   const likeReview = async (reviewId: string) => {
-    try {
-      const review = reviews.find(r => r.id === reviewId);
-      if (!review) return;
-
-      // Optimistic update for instant feedback
-      setReviews(prev => prev.map(r => 
-        r.id === reviewId ? { ...r, likes: (r.likes || 0) + 1 } : r
-      ));
-
-      // Note: Full like persistence would require a database function
-      // For now, likes persist until page refresh
-    } catch (error) {
-      console.error('Error liking review:', error);
-    }
-  };
-
-  const getReviewsByRating = (rating: number) => {
-    return reviews.filter(r => r.rating === rating);
+    setReviews(prev => prev.map(r => 
+      r.id === reviewId ? { ...r, likes: (r.likes || 0) + 1 } : r
+    ));
   };
 
   const getAverageRating = useCallback(() => {
@@ -182,7 +132,6 @@ export function useReviews() {
     return (total / reviews.length).toFixed(1);
   }, [reviews]);
 
-  // Calculate rating distribution with percentages
   const getRatingDistribution = useMemo((): RatingDistribution[] => {
     const total = reviews.length;
     if (total === 0) {
@@ -200,7 +149,6 @@ export function useReviews() {
     });
   }, [reviews]);
 
-  // Calculate satisfaction percentage (4-5 stars)
   const getSatisfactionPercentage = useMemo(() => {
     if (reviews.length === 0) return 0;
     const satisfied = reviews.filter(r => r.rating >= 4).length;
@@ -211,10 +159,8 @@ export function useReviews() {
     reviews,
     loading,
     createReview,
-    updateReview,
     deleteReview,
     likeReview,
-    getReviewsByRating,
     getAverageRating,
     getRatingDistribution,
     getSatisfactionPercentage,

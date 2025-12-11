@@ -99,7 +99,7 @@ export function HeroSection() {
 
             {/* Search Results - only show when there's a query */}
             {isSearchFocused && searchQuery.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-20 animate-scale-in max-h-72">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-scale-in max-h-72">
                 {searchResults.length > 0 && (
                   <div className="max-h-56 overflow-y-auto">
                     {searchResults.map((product) => (
@@ -129,7 +129,7 @@ export function HeroSection() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 relative z-10">
             <Button variant="premium" size="lg" className="group w-full sm:w-auto" onClick={() => navigate("/produk")}>
               Mulai Belanja
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
