@@ -27,7 +27,7 @@ export default function Login() {
       <Card variant="glass" className="w-full max-w-md p-8 relative z-10 animate-scale-in">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <img src="/premio-logo.png" alt="Premio" className="w-12 h-12 rounded-xl object-cover" />
+          <img src="/premio-logo.png" alt="Premio" className="w-14 h-14 object-contain" />
           <span className="text-2xl font-bold premio-gradient-text">Premio</span>
         </Link>
 

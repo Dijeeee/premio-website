@@ -21,6 +21,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useProfile } from "@/hooks/useProfile";
 import { NotificationPanel } from "@/components/notifications/NotificationPanel";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -50,6 +51,7 @@ export default function Dashboard() {
   const { totalItems } = useCart();
   const { user, isLoading, signOut } = useAuth();
   const { unreadCount } = useNotifications();
+  const { profile } = useProfile();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -103,7 +105,8 @@ export default function Dashboard() {
     return null;
   }
 
-  const userName = user.email?.split("@")[0] || "User";
+  const userName = profile?.full_name || user.email?.split("@")[0] || "User";
+  const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
   const renderContent = () => {
     switch (currentPage) {
@@ -214,7 +217,7 @@ export default function Dashboard() {
               />
             </div>
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-              <span className="text-primary-foreground font-semibold text-xs">{userName.substring(0, 2).toUpperCase()}</span>
+              <span className="text-primary-foreground font-semibold text-xs">{userInitials}</span>
             </div>
           </div>
         </header>
