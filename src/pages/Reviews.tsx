@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, ThumbsUp, MessageCircle, Plus, Loader2 } from "lucide-react";
+import { Star, ThumbsUp, MessageCircle, Plus, Loader2, Send, X } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ import { products } from "@/data/products";
 import { useReviews } from "@/hooks/useReviews";
 import { useWebsiteReviews } from "@/hooks/useWebsiteReviews";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -27,6 +29,15 @@ const avatarColors = [
   "from-indigo-500 to-purple-500",
   "from-cyan-500 to-blue-500",
 ];
+
+interface Reply {
+  id: string;
+  review_id: string;
+  user_id: string;
+  user_name: string | null;
+  content: string;
+  created_at: string;
+}
 
 export default function Reviews() {
   const { user } = useAuth();
@@ -56,6 +67,70 @@ export default function Reviews() {
   const [newReview, setNewReview] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [replies, setReplies] = useState<Record<string, Reply[]>>({});
+  const [websiteReplies, setWebsiteReplies] = useState<Record<string, Reply[]>>({});
+  const [loadingReplies, setLoadingReplies] = useState<Record<string, boolean>>({});
+
+  const fetchReplies = async (reviewId: string, isWebsite: boolean) => {
+    const tableName = isWebsite ? 'website_review_replies' : 'review_replies';
+    setLoadingReplies(prev => ({ ...prev, [reviewId]: true }));
+    
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq('review_id', reviewId)
+      .order('created_at', { ascending: true });
+    
+    if (!error && data) {
+      if (isWebsite) {
+        setWebsiteReplies(prev => ({ ...prev, [reviewId]: data as Reply[] }));
+      } else {
+        setReplies(prev => ({ ...prev, [reviewId]: data as Reply[] }));
+      }
+    }
+    setLoadingReplies(prev => ({ ...prev, [reviewId]: false }));
+  };
+
+  const handleReply = async (reviewId: string, isWebsite: boolean) => {
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu");
+      return;
+    }
+    if (!replyContent.trim()) {
+      toast.error("Mohon isi balasan Anda");
+      return;
+    }
+
+    // Get user name from profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', user.id)
+      .single();
+
+    const tableName = isWebsite ? 'website_review_replies' : 'review_replies';
+    
+    const { error } = await supabase.from(tableName).insert({
+      review_id: reviewId,
+      user_id: user.id,
+      user_name: profile?.full_name || 'Pengguna',
+      content: replyContent
+    });
+
+    if (error) {
+      toast.error("Gagal mengirim balasan");
+      return;
+    }
+
+    toast.success("Balasan berhasil dikirim");
+    setReplyContent("");
+    setReplyingTo(null);
+    fetchReplies(reviewId, isWebsite);
+  };
 
   const handleSubmitProductReview = async () => {
     if (!user) {
@@ -157,57 +232,145 @@ export default function Reviews() {
     </Card>
   );
 
-  const renderReviewCard = (review: any, index: number, isWebsite: boolean, onLike: (id: string) => void) => (
-    <Card
-      key={review.id}
-      variant="glass"
-      className="p-3 md:p-4 lg:p-5 animate-slide-up hover:shadow-glow transition-all duration-300"
-      style={{ animationDelay: `${index * 50}ms` }}
-    >
-      <div className="flex items-start gap-3 mb-3">
-        <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br ${getAvatarColor(index)} flex items-center justify-center flex-shrink-0`}>
-          <span className="text-white font-semibold text-xs md:text-sm">
-            {review.user_name ? getInitials(review.user_name) : "U"}
-          </span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm md:text-base">{review.user_name || "Pengguna"}</span>
-            <Badge variant="success" className="text-[10px]">Verified</Badge>
+  const renderReviewCard = (review: any, index: number, isWebsite: boolean, onLike: (id: string) => void) => {
+    const reviewReplies = isWebsite ? websiteReplies[review.id] : replies[review.id];
+    const isLoadingReplies = loadingReplies[review.id];
+    const isReplying = replyingTo === review.id;
+
+    return (
+      <Card
+        key={review.id}
+        variant="glass"
+        className="p-3 md:p-4 lg:p-5 animate-slide-up hover:shadow-glow transition-all duration-300"
+        style={{ animationDelay: `${index * 50}ms` }}
+      >
+        <div className="flex items-start gap-3 mb-3">
+          <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br ${getAvatarColor(index)} flex items-center justify-center flex-shrink-0`}>
+            <span className="text-white font-semibold text-xs md:text-sm">
+              {review.user_name ? getInitials(review.user_name) : "U"}
+            </span>
           </div>
-          <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
-            {!isWebsite && <><span>{review.product_name}</span><span>•</span></>}
-            <span>{formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: id })}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-sm md:text-base">{review.user_name || "Pengguna"}</span>
+              <Badge variant="success" className="text-[10px]">Verified</Badge>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
+              {!isWebsite && <><span>{review.product_name}</span><span>•</span></>}
+              <span>{formatDistanceToNow(new Date(review.created_at), { addSuffix: true, locale: id })}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex gap-0.5 mb-2">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted"}`}
-          />
-        ))}
-      </div>
+        <div className="flex gap-0.5 mb-2">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`h-3.5 w-3.5 md:h-4 md:w-4 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted"}`}
+            />
+          ))}
+        </div>
 
-      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-3">{review.content}</p>
+        <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-3">{review.content}</p>
 
-      <div className="flex items-center gap-4 pt-2 border-t border-border">
-        <button 
-          className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors"
-          onClick={() => onLike(review.id)}
-        >
-          <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
-          <span>{review.likes}</span>
-        </button>
-        <button className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors">
-          <MessageCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
-          <span>Balas</span>
-        </button>
-      </div>
-    </Card>
-  );
+        <div className="flex items-center gap-4 pt-2 border-t border-border">
+          <button 
+            className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors"
+            onClick={() => onLike(review.id)}
+          >
+            <ThumbsUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            <span>{review.likes}</span>
+          </button>
+          <button 
+            className="flex items-center gap-1.5 text-[10px] md:text-xs text-muted-foreground hover:text-primary transition-colors"
+            onClick={() => {
+              if (replyingTo === review.id) {
+                setReplyingTo(null);
+              } else {
+                setReplyingTo(review.id);
+                if (!reviewReplies) {
+                  fetchReplies(review.id, isWebsite);
+                }
+              }
+            }}
+          >
+            <MessageCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            <span>Balas</span>
+          </button>
+        </div>
+
+        {/* Replies Section */}
+        {(isReplying || reviewReplies) && (
+          <div className="mt-3 pt-3 border-t border-border space-y-3">
+            {isLoadingReplies ? (
+              <div className="flex items-center justify-center py-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              </div>
+            ) : (
+              <>
+                {/* Show existing replies */}
+                {reviewReplies && reviewReplies.map((reply, replyIndex) => (
+                  <div key={reply.id} className="flex items-start gap-2 pl-4 border-l-2 border-primary/20">
+                    <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${getAvatarColor(replyIndex + 10)} flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-white font-semibold text-[10px]">
+                        {reply.user_name ? getInitials(reply.user_name) : "U"}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-xs">{reply.user_name || "Pengguna"}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true, locale: id })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{reply.content}</p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Reply input */}
+                {isReplying && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Tulis balasan..."
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      className="flex-1 h-9 text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleReply(review.id, isWebsite);
+                        }
+                      }}
+                    />
+                    <Button 
+                      size="sm" 
+                      variant="premium" 
+                      className="h-9 px-3"
+                      onClick={() => handleReply(review.id, isWebsite)}
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-9 px-2"
+                      onClick={() => {
+                        setReplyingTo(null);
+                        setReplyContent("");
+                      }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen">
