@@ -117,9 +117,7 @@ export default function Auth({ defaultMode = 'login' }: { defaultMode?: 'login' 
       <Card variant="glass" className="w-full max-w-md p-8 relative z-10 animate-scale-in">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-premio-gradient flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-2xl">P</span>
-          </div>
+          <img src="/premio-logo.png" alt="Premio" className="w-14 h-14 object-contain" />
           <span className="text-2xl font-bold premio-gradient-text">Premio</span>
         </Link>
 
