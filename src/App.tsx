@@ -15,7 +15,6 @@ import ProductDetail from "./pages/ProductDetail";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Reviews from "./pages/Reviews";
-import WebsiteReviews from "./pages/WebsiteReviews";
 import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
 import TransactionDetail from "./pages/dashboard/TransactionDetail";
@@ -44,7 +43,6 @@ const App = () => (
                   <Route path="/produk/:id" element={<ProductDetail />} />
                   <Route path="/kategori" element={<Categories />} />
                   <Route path="/review" element={<Reviews />} />
-                  <Route path="/website-review" element={<WebsiteReviews />} />
                   <Route path="/wishlist" element={<Wishlist />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/dashboard" element={<Dashboard />} />
