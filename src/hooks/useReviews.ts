@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -16,17 +16,18 @@ export interface Review {
   user_name?: string;
 }
 
+export interface RatingDistribution {
+  rating: number;
+  count: number;
+  percentage: number;
+}
+
 export function useReviews() {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchReviews();
-    subscribeToReviews();
-  }, []);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('reviews')
@@ -40,11 +41,14 @@ export function useReviews() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const subscribeToReviews = () => {
+  useEffect(() => {
+    fetchReviews();
+    
+    // Subscribe to realtime changes
     const channel = supabase
-      .channel('reviews-changes')
+      .channel('reviews-realtime')
       .on(
         'postgres_changes',
         {
@@ -61,7 +65,7 @@ export function useReviews() {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [fetchReviews]);
 
   const createReview = async (review: {
     product_id: string;
@@ -69,7 +73,10 @@ export function useReviews() {
     rating: number;
     content: string;
   }) => {
-    if (!user) return { error: new Error('Not authenticated') };
+    if (!user) {
+      toast.error('Silakan login terlebih dahulu');
+      return { error: new Error('Not authenticated') };
+    }
 
     try {
       const { error } = await supabase
@@ -82,7 +89,6 @@ export function useReviews() {
 
       if (error) throw error;
       
-      await fetchReviews();
       toast.success('Review berhasil ditambahkan!');
       return { error: null };
     } catch (error: any) {
@@ -103,7 +109,6 @@ export function useReviews() {
 
       if (error) throw error;
       
-      await fetchReviews();
       toast.success('Review berhasil diperbarui');
       return { error: null };
     } catch (error: any) {
@@ -124,7 +129,6 @@ export function useReviews() {
 
       if (error) throw error;
       
-      await fetchReviews();
       toast.success('Review berhasil dihapus');
       return { error: null };
     } catch (error: any) {
@@ -133,18 +137,19 @@ export function useReviews() {
     }
   };
 
+  // Like review - optimistic update (actual persistence would need an RPC function)
   const likeReview = async (reviewId: string) => {
     try {
       const review = reviews.find(r => r.id === reviewId);
       if (!review) return;
 
-      const { error } = await supabase
-        .from('reviews')
-        .update({ likes: (review.likes || 0) + 1 })
-        .eq('id', reviewId);
+      // Optimistic update for instant feedback
+      setReviews(prev => prev.map(r => 
+        r.id === reviewId ? { ...r, likes: (r.likes || 0) + 1 } : r
+      ));
 
-      if (error) throw error;
-      await fetchReviews();
+      // Note: Full like persistence would require a database function
+      // For now, likes persist until page refresh
     } catch (error) {
       console.error('Error liking review:', error);
     }
@@ -154,11 +159,36 @@ export function useReviews() {
     return reviews.filter(r => r.rating === rating);
   };
 
-  const getAverageRating = () => {
-    if (reviews.length === 0) return 0;
+  const getAverageRating = useCallback(() => {
+    if (reviews.length === 0) return "0.0";
     const total = reviews.reduce((sum, r) => sum + r.rating, 0);
     return (total / reviews.length).toFixed(1);
-  };
+  }, [reviews]);
+
+  // Calculate rating distribution with percentages
+  const getRatingDistribution = useMemo((): RatingDistribution[] => {
+    const total = reviews.length;
+    if (total === 0) {
+      return [5, 4, 3, 2, 1].map(rating => ({
+        rating,
+        count: 0,
+        percentage: 0
+      }));
+    }
+
+    return [5, 4, 3, 2, 1].map(rating => {
+      const count = reviews.filter(r => r.rating === rating).length;
+      const percentage = Math.round((count / total) * 100);
+      return { rating, count, percentage };
+    });
+  }, [reviews]);
+
+  // Calculate satisfaction percentage (4-5 stars)
+  const getSatisfactionPercentage = useMemo(() => {
+    if (reviews.length === 0) return 0;
+    const satisfied = reviews.filter(r => r.rating >= 4).length;
+    return Math.round((satisfied / reviews.length) * 100);
+  }, [reviews]);
 
   return {
     reviews,
@@ -169,6 +199,8 @@ export function useReviews() {
     likeReview,
     getReviewsByRating,
     getAverageRating,
+    getRatingDistribution,
+    getSatisfactionPercentage,
     refetch: fetchReviews
   };
 }

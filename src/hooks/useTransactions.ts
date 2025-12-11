@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -23,16 +23,7 @@ export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchTransactions();
-    } else {
-      setTransactions([]);
-      setLoading(false);
-    }
-  }, [user]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -55,7 +46,38 @@ export function useTransactions() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchTransactions();
+      
+      // Subscribe to realtime updates
+      const channel = supabase
+        .channel('transactions-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'transactions',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Transaction update:', payload);
+            fetchTransactions();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      setTransactions([]);
+      setLoading(false);
+    }
+  }, [user, fetchTransactions]);
 
   const createTransaction = async (transaction: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) return { error: new Error('Not authenticated') };
@@ -70,7 +92,6 @@ export function useTransactions() {
 
       if (error) throw error;
       
-      await fetchTransactions();
       toast.success('Transaksi berhasil!');
       return { error: null };
     } catch (error: any) {
