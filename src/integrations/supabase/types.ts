@@ -185,6 +185,39 @@ export type Database = {
         }
         Relationships: []
       }
+      website_reviews: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          likes: number | null
+          rating: number
+          updated_at: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          likes?: number | null
+          rating: number
+          updated_at?: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          likes?: number | null
+          rating?: number
+          updated_at?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

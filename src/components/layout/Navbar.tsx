@@ -12,13 +12,15 @@ import { NotificationPanel } from "@/components/notifications/NotificationPanel"
 import { cn } from "@/lib/utils";
 import { products } from "@/data/products";
 import { toast } from "sonner";
+import premioLogo from "@/assets/premio-logo.png";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/kategori", label: "Kategori" },
   { href: "/produk", label: "Produk" },
   { href: "/wishlist", label: "Wishlist" },
-  { href: "/review", label: "Review" },
+  { href: "/review", label: "Review Produk" },
+  { href: "/website-review", label: "Review Website" },
 ];
 
 export function Navbar() {
@@ -118,9 +120,7 @@ export function Navbar() {
         <nav className="flex items-center justify-between h-14 md:h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">P</span>
-            </div>
+            <img src={premioLogo} alt="Premio" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
             <span className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent hidden sm:block">Premio</span>
           </Link>
 
