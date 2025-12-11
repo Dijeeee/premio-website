@@ -108,7 +108,7 @@ export function Navbar() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 pointer-events-auto",
         isScrolled
           ? "bg-background/80 backdrop-blur-xl border-b border-border shadow-sm"
           : "bg-transparent"
@@ -243,7 +243,7 @@ export function Navbar() {
               )}
             </Button>
 
-            <div className="hidden md:flex items-center gap-2 ml-1 relative z-50">
+            <div className="hidden md:flex items-center gap-2 ml-1 relative z-[60] pointer-events-auto">
               {user ? (
                 <>
                   {/* Notifications */}
@@ -251,8 +251,11 @@ export function Navbar() {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-9 w-9 relative"
-                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                      className="h-9 w-9 relative pointer-events-auto"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsNotificationOpen(!isNotificationOpen);
+                      }}
                     >
                       <Bell className="h-4 w-4" />
                       {unreadCount > 0 && (
@@ -266,8 +269,8 @@ export function Navbar() {
                       onClose={() => setIsNotificationOpen(false)} 
                     />
                   </div>
-                  <Link to="/dashboard" className="relative z-50">
-                    <Button variant="ghost" size="sm" className="gap-1.5">
+                  <Link to="/dashboard" className="relative z-[60] pointer-events-auto">
+                    <Button variant="ghost" size="sm" className="gap-1.5 pointer-events-auto">
                       <User className="h-4 w-4" />
                       Profil
                     </Button>
@@ -275,8 +278,11 @@ export function Navbar() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={handleLogout} 
-                    className="gap-1.5 relative z-50 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLogout();
+                    }}
+                    className="gap-1.5 relative z-[60] pointer-events-auto cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
                     Logout

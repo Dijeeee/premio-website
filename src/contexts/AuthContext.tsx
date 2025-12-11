@@ -48,34 +48,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-
-        // Check admin status with user id directly
-        if (session?.user) {
-          await checkIsAdmin(session.user.id);
-        } else {
-          setIsAdmin(false);
-        }
-      }
-    );
-
-    // THEN check for existing session
+    let isMounted = true;
+    
+    // Get initial session first for faster loading
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
 
       if (session?.user) {
-        await checkIsAdmin(session.user.id);
+        // Check admin in background, don't block UI
+        checkIsAdmin(session.user.id);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (event === 'SIGNED_OUT') {
+          setIsAdmin(false);
+          setIsLoading(false);
+        } else if (session?.user) {
+          // Defer admin check to not block UI
+          setTimeout(() => {
+            if (isMounted) checkIsAdmin(session.user.id);
+          }, 0);
+        }
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
