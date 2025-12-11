@@ -137,9 +137,7 @@ export default function Dashboard() {
       )}>
         <div className="h-14 px-4 flex items-center justify-between border-b border-border">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">P</span>
-            </div>
+            <img src="/premio-logo.png" alt="Premio" className="w-8 h-8 rounded-lg object-cover" />
             <span className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Premio</span>
           </Link>
           <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8" onClick={() => setSidebarOpen(false)}>

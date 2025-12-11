@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Star, Download, Shield, Check, Play, ShoppingCart, Heart, Share2 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { products, getProductById, formatPrice } from "@/data/products";
+import { toast } from "sonner";
 
 const productData = {
   "netflix-premium": {
@@ -71,20 +75,63 @@ const reviews = [
   { id: 3, name: "Maya S.", avatar: "M", rating: 4, date: "2 minggu lalu", content: "Kualitas streaming excellent." },
 ];
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
-}
-
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly" | "yearly">("monthly");
 
-  const product = productData[id as ProductId] || productData["netflix-premium"];
+  // Get product from centralized data first
+  const productFromData = getProductById(id || "");
+  const productFromLocal = productData[id as ProductId];
+  
+  // Helper to get price (handles both data structures)
+  const getPrice = (plan: "weekly" | "monthly" | "yearly"): number => {
+    if (productFromData) {
+      return productFromData.prices[plan];
+    }
+    if (productFromLocal) {
+      return productFromLocal.prices[plan].price;
+    }
+    return productData["netflix-premium"].prices[plan].price;
+  };
+
+  const getOriginalPrice = (plan: "weekly" | "monthly" | "yearly"): number => {
+    if (productFromData) {
+      return productFromData.originalPrices[plan];
+    }
+    if (productFromLocal) {
+      return productFromLocal.prices[plan].originalPrice;
+    }
+    return productData["netflix-premium"].prices[plan].originalPrice;
+  };
+
+  // Normalize product data
+  const product = {
+    name: productFromData?.name || productFromLocal?.name || productData["netflix-premium"].name,
+    logo: productFromData?.logo || productFromLocal?.logo || productData["netflix-premium"].logo,
+    logoColor: productFromData?.logoColor || productFromLocal?.logoColor || productData["netflix-premium"].logoColor,
+    category: productFromData?.category || productFromLocal?.category || productData["netflix-premium"].category,
+    rating: productFromData?.rating || productFromLocal?.rating || productData["netflix-premium"].rating,
+    downloads: productFromData?.downloads || productFromLocal?.downloads || productData["netflix-premium"].downloads,
+    description: productFromData?.description || productFromLocal?.description || productData["netflix-premium"].description,
+    image: productFromData?.image || "",
+    reviews: productFromLocal?.reviews || 1000,
+    features: productFromLocal?.features || [
+      "Akses premium tanpa batas",
+      "Fitur eksklusif tersedia",
+      "Support prioritas 24/7",
+      "Update otomatis",
+      "Multi-device support",
+      "Garansi 100%",
+    ],
+  };
 
   const plans: Array<{ key: "weekly" | "monthly" | "yearly"; label: string; price: number; originalPrice: number; popular?: boolean; save?: string }> = [
-    { key: "weekly", label: "Mingguan", ...product.prices.weekly },
-    { key: "monthly", label: "Bulanan", ...product.prices.monthly, popular: true },
-    { key: "yearly", label: "Tahunan", ...product.prices.yearly, save: "30%" },
+    { key: "weekly", label: "Mingguan", price: getPrice("weekly"), originalPrice: getOriginalPrice("weekly") },
+    { key: "monthly", label: "Bulanan", price: getPrice("monthly"), originalPrice: getOriginalPrice("monthly"), popular: true },
+    { key: "yearly", label: "Tahunan", price: getPrice("yearly"), originalPrice: getOriginalPrice("yearly"), save: "30%" },
   ];
 
   return (
@@ -112,7 +159,28 @@ export default function ProductDetail() {
                         <h1 className="text-3xl md:text-4xl font-bold mb-2">{product.name}</h1>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="icon"><Heart className="h-5 w-5" /></Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => {
+                            const productId = id || "netflix-premium";
+                            if (isInWishlist(productId)) {
+                              removeFromWishlist(productId);
+                            } else {
+                              addToWishlist({
+                                id: productId,
+                                name: product.name,
+                                logo: product.logo,
+                                logoColor: product.logoColor,
+                                image: product.image,
+                                category: product.category,
+                                price: getPrice(selectedPlan),
+                              });
+                            }
+                          }}
+                        >
+                          <Heart className={`h-5 w-5 ${isInWishlist(id || "") ? "fill-red-500 text-red-500" : ""}`} />
+                        </Button>
                         <Button variant="outline" size="icon"><Share2 className="h-5 w-5" /></Button>
                       </div>
                     </div>
@@ -222,15 +290,51 @@ export default function ProductDetail() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-muted-foreground">Total</span>
                     <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                      {formatPrice(product.prices[selectedPlan].price)}
+                      {formatPrice(getPrice(selectedPlan))}
                     </span>
                   </div>
                 </div>
-                <Button variant="premium" className="w-full mb-3" size="lg">
+                <Button 
+                  variant="premium" 
+                  className="w-full mb-3" 
+                  size="lg"
+                  onClick={() => {
+                    const productId = id || "netflix-premium";
+                    addToCart({
+                      id: productId,
+                      name: product.name,
+                      logo: product.logo,
+                      logoColor: product.logoColor,
+                      category: product.category,
+                      price: getPrice(selectedPlan),
+                      plan: selectedPlan,
+                      planLabel: selectedPlan === "weekly" ? "1 Minggu" : selectedPlan === "monthly" ? "1 Bulan" : "1 Tahun",
+                    });
+                    navigate("/checkout");
+                  }}
+                >
                   <ShoppingCart className="h-5 w-5" />
                   Beli Sekarang
                 </Button>
-                <Button variant="outline" className="w-full">Tambah ke Keranjang</Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    const productId = id || "netflix-premium";
+                    addToCart({
+                      id: productId,
+                      name: product.name,
+                      logo: product.logo,
+                      logoColor: product.logoColor,
+                      category: product.category,
+                      price: getPrice(selectedPlan),
+                      plan: selectedPlan,
+                      planLabel: selectedPlan === "weekly" ? "1 Minggu" : selectedPlan === "monthly" ? "1 Bulan" : "1 Tahun",
+                    });
+                  }}
+                >
+                  Tambah ke Keranjang
+                </Button>
                 <div className="mt-6 pt-6 border-t border-border space-y-3">
                   {["Aktivasi instan", "Garansi 100%", "Support 24/7"].map((item, index) => (
                     <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
