@@ -10,6 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTransactions } from "@/hooks/useTransactions";
 import { toast } from "sonner";
 
+// Note: Success notification removed - PaymentSuccess page handles celebration
+
 const paymentMethods = [
   { id: "gopay", name: "GoPay", icon: Wallet, color: "from-blue-500 to-cyan-500" },
   { id: "ovo", name: "OVO", icon: Wallet, color: "from-purple-500 to-violet-500" },
