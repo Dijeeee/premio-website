@@ -16,6 +16,7 @@ import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Reviews from "./pages/Reviews";
 import Checkout from "./pages/Checkout";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import Dashboard from "./pages/Dashboard";
 import TransactionDetail from "./pages/dashboard/TransactionDetail";
 import Wishlist from "./pages/Wishlist";
@@ -45,12 +46,12 @@ const App = () => (
                   <Route path="/review" element={<Reviews />} />
                   <Route path="/wishlist" element={<Wishlist />} />
                   <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/pembayaran-berhasil" element={<PaymentSuccess />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/dashboard/keranjang" element={<Dashboard />} />
                   <Route path="/dashboard/langganan" element={<Dashboard />} />
                   <Route path="/dashboard/transaksi" element={<Dashboard />} />
                   <Route path="/dashboard/transaksi/:id" element={<TransactionDetail />} />
-                  <Route path="/dashboard/download" element={<Dashboard />} />
                   <Route path="/dashboard/profil" element={<Dashboard />} />
                   <Route path="/dashboard/pengaturan" element={<Dashboard />} />
                   <Route path="*" element={<NotFound />} />
