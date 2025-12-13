@@ -45,19 +45,19 @@ export default function Reviews() {
     reviews, 
     loading: productLoading, 
     createReview, 
-    likeReview, 
     getAverageRating,
     getRatingDistribution,
-    getSatisfactionPercentage
+    getSatisfactionPercentage,
+    refetch: refetchProductReviews
   } = useReviews();
   const {
     reviews: websiteReviews,
     loading: websiteLoading,
     createReview: createWebsiteReview,
-    likeReview: likeWebsiteReview,
     getAverageRating: getWebsiteAvgRating,
     getRatingDistribution: getWebsiteRatingDistribution,
-    getSatisfactionPercentage: getWebsiteSatisfaction
+    getSatisfactionPercentage: getWebsiteSatisfaction,
+    refetch: refetchWebsiteReviews
   } = useWebsiteReviews();
 
   const [activeTab, setActiveTab] = useState("website");
@@ -274,7 +274,10 @@ export default function Reviews() {
 
     const currentLike = userLikes[reviewId];
     const tableName = isWebsite ? 'website_reviews' : 'reviews';
+    const currentReview = (isWebsite ? websiteReviews : reviews).find(r => r.id === reviewId);
     
+    if (!currentReview) return;
+
     try {
       if (currentLike?.isLike === isLike) {
         // Remove like/dislike
@@ -283,11 +286,11 @@ export default function Reviews() {
           .eq('user_id', user.id);
         
         // Update count
-        if (isLike) {
-          await supabase.from(tableName).update({ likes: Math.max(0, (isWebsite ? websiteReviews : reviews).find(r => r.id === reviewId)?.likes - 1 || 0) }).eq('id', reviewId);
-        } else {
-          await supabase.from(tableName).update({ dislikes: Math.max(0, (isWebsite ? websiteReviews : reviews).find(r => r.id === reviewId)?.dislikes - 1 || 0) }).eq('id', reviewId);
-        }
+        const updateData = isLike 
+          ? { likes: Math.max(0, (currentReview.likes || 1) - 1) }
+          : { dislikes: Math.max(0, (currentReview.dislikes || 1) - 1) };
+        
+        await supabase.from(tableName).update(updateData).eq('id', reviewId);
         
         setUserLikes(prev => {
           const newLikes = { ...prev };
@@ -303,32 +306,41 @@ export default function Reviews() {
           is_like: isLike
         }, { onConflict: 'review_id,user_id,is_website_review' });
         
-        const currentReview = (isWebsite ? websiteReviews : reviews).find(r => r.id === reviewId);
+        let updateData: { likes?: number; dislikes?: number } = {};
         
         // Update counts based on previous state
         if (currentLike?.isLike === true && !isLike) {
           // Was like, now dislike
-          await supabase.from(tableName).update({ 
-            likes: Math.max(0, (currentReview?.likes || 1) - 1),
-            dislikes: (currentReview?.dislikes || 0) + 1 
-          }).eq('id', reviewId);
+          updateData = { 
+            likes: Math.max(0, (currentReview.likes || 1) - 1),
+            dislikes: (currentReview.dislikes || 0) + 1 
+          };
         } else if (currentLike?.isLike === false && isLike) {
           // Was dislike, now like
-          await supabase.from(tableName).update({ 
-            likes: (currentReview?.likes || 0) + 1,
-            dislikes: Math.max(0, (currentReview?.dislikes || 1) - 1)
-          }).eq('id', reviewId);
+          updateData = { 
+            likes: (currentReview.likes || 0) + 1,
+            dislikes: Math.max(0, (currentReview.dislikes || 1) - 1)
+          };
         } else if (isLike) {
           // New like
-          await supabase.from(tableName).update({ likes: (currentReview?.likes || 0) + 1 }).eq('id', reviewId);
+          updateData = { likes: (currentReview.likes || 0) + 1 };
         } else {
           // New dislike
-          await supabase.from(tableName).update({ dislikes: (currentReview?.dislikes || 0) + 1 }).eq('id', reviewId);
+          updateData = { dislikes: (currentReview.dislikes || 0) + 1 };
         }
         
+        await supabase.from(tableName).update(updateData).eq('id', reviewId);
         setUserLikes(prev => ({ ...prev, [reviewId]: { isLike } }));
       }
+
+      // Refetch reviews to ensure sync
+      if (isWebsite) {
+        refetchWebsiteReviews();
+      } else {
+        refetchProductReviews();
+      }
     } catch (error) {
+      console.error('Like/dislike error:', error);
       toast.error("Gagal memproses");
     }
   };
