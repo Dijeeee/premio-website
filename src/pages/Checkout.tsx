@@ -84,8 +84,7 @@ export default function Checkout() {
       }
 
       clearCart();
-      toast.success("Pembayaran berhasil! Cek email untuk detail aktivasi.");
-      navigate("/dashboard/langganan");
+      navigate("/pembayaran-berhasil");
     } catch (error) {
       toast.error("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
