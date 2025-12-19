@@ -278,33 +278,49 @@ export default function Reviews() {
     
     if (!currentReview) return;
 
+    // Optimistic update
+    const originalLikes = userLikes[reviewId];
+    
     try {
       if (currentLike?.isLike === isLike) {
-        // Remove like/dislike
-        await supabase.from('review_likes').delete()
+        // Remove like/dislike - optimistic update
+        setUserLikes(prev => {
+          const newLikes = { ...prev };
+          delete newLikes[reviewId];
+          return newLikes;
+        });
+
+        const { error: deleteError } = await supabase.from('review_likes').delete()
           .eq('review_id', reviewId)
           .eq('user_id', user.id);
+        
+        if (deleteError) throw deleteError;
         
         // Update count
         const updateData = isLike 
           ? { likes: Math.max(0, (currentReview.likes || 1) - 1) }
           : { dislikes: Math.max(0, (currentReview.dislikes || 1) - 1) };
         
-        await supabase.from(tableName).update(updateData).eq('id', reviewId);
-        
-        setUserLikes(prev => {
-          const newLikes = { ...prev };
-          delete newLikes[reviewId];
-          return newLikes;
-        });
+        const { error: updateError } = await supabase.from(tableName).update(updateData).eq('id', reviewId);
+        if (updateError) throw updateError;
       } else {
-        // Upsert like/dislike
-        await supabase.from('review_likes').upsert({
+        // Optimistic update
+        setUserLikes(prev => ({ ...prev, [reviewId]: { isLike } }));
+
+        // First delete existing like/dislike if any
+        await supabase.from('review_likes').delete()
+          .eq('review_id', reviewId)
+          .eq('user_id', user.id);
+
+        // Then insert new like/dislike
+        const { error: insertError } = await supabase.from('review_likes').insert({
           review_id: reviewId,
           user_id: user.id,
           is_website_review: isWebsite,
           is_like: isLike
-        }, { onConflict: 'review_id,user_id,is_website_review' });
+        });
+        
+        if (insertError) throw insertError;
         
         let updateData: { likes?: number; dislikes?: number } = {};
         
@@ -329,8 +345,8 @@ export default function Reviews() {
           updateData = { dislikes: (currentReview.dislikes || 0) + 1 };
         }
         
-        await supabase.from(tableName).update(updateData).eq('id', reviewId);
-        setUserLikes(prev => ({ ...prev, [reviewId]: { isLike } }));
+        const { error: updateError } = await supabase.from(tableName).update(updateData).eq('id', reviewId);
+        if (updateError) throw updateError;
       }
 
       // Refetch reviews to ensure sync
@@ -341,6 +357,16 @@ export default function Reviews() {
       }
     } catch (error) {
       console.error('Like/dislike error:', error);
+      // Revert optimistic update on error
+      if (originalLikes) {
+        setUserLikes(prev => ({ ...prev, [reviewId]: originalLikes }));
+      } else {
+        setUserLikes(prev => {
+          const newLikes = { ...prev };
+          delete newLikes[reviewId];
+          return newLikes;
+        });
+      }
       toast.error("Gagal memproses");
     }
   };
