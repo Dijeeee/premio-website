@@ -15,6 +15,7 @@ export interface Review {
   created_at: string;
   updated_at: string;
   user_name?: string;
+  avatar_url?: string;
 }
 
 export interface RatingDistribution {
@@ -42,13 +43,14 @@ export function useReviews() {
         (data || []).map(async (review) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('full_name')
+            .select('full_name, avatar_url')
             .eq('user_id', review.user_id)
             .maybeSingle();
           
           return {
             ...review,
-            user_name: profile?.full_name || null
+            user_name: profile?.full_name || null,
+            avatar_url: profile?.avatar_url || null
           };
         })
       );

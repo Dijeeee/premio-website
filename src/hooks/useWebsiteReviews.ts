@@ -7,6 +7,7 @@ export interface WebsiteReview {
   id: string;
   user_id: string;
   user_name: string | null;
+  avatar_url: string | null;
   rating: number;
   content: string;
   likes: number | null;
@@ -34,7 +35,25 @@ export function useWebsiteReviews() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setReviews(data || []);
+      
+      // Fetch user profiles for avatar
+      const reviewsWithProfiles = await Promise.all(
+        (data || []).map(async (review) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('user_id', review.user_id)
+            .maybeSingle();
+          
+          return {
+            ...review,
+            user_name: profile?.full_name || review.user_name,
+            avatar_url: profile?.avatar_url || null
+          };
+        })
+      );
+      
+      setReviews(reviewsWithProfiles);
     } catch (error) {
       console.error('Error fetching website reviews:', error);
     } finally {

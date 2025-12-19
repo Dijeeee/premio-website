@@ -407,11 +407,19 @@ export default function Reviews() {
         style={{ animationDelay: `${index * 50}ms` }}
       >
         <div className="flex items-start gap-3 mb-3">
-          <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br ${getAvatarColor(index)} flex items-center justify-center flex-shrink-0`}>
-            <span className="text-white font-semibold text-xs md:text-sm">
-              {review.user_name ? getInitials(review.user_name) : "U"}
-            </span>
-          </div>
+          {review.avatar_url ? (
+            <img 
+              src={review.avatar_url} 
+              alt={review.user_name || "User"} 
+              className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br ${getAvatarColor(index)} flex items-center justify-center flex-shrink-0`}>
+              <span className="text-white font-semibold text-xs md:text-sm">
+                {review.user_name ? getInitials(review.user_name) : "U"}
+              </span>
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-sm md:text-base">{review.user_name || "Pengguna"}</span>
