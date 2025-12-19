@@ -333,6 +333,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_review_likes: {
+        Args: {
+          p_dislikes: number
+          p_is_website_review?: boolean
+          p_likes: number
+          p_review_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
