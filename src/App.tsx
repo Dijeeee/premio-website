@@ -8,6 +8,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { WhatsAppFloating } from "@/components/common/WhatsAppFloating";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
@@ -35,6 +36,7 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <CartDrawer />
+                <WhatsAppFloating />
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Auth />} />
