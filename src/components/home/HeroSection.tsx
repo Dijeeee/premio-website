@@ -128,8 +128,11 @@ export function HeroSection() {
             )}
           </div>
 
-          {/* CTA Buttons - positioned below search with margin */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 relative z-0 mt-4">
+          {/* CTA Buttons - positioned below search, hidden when search dropdown is open */}
+          <div className={cn(
+            "flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 mt-4 transition-opacity duration-200",
+            isSearchFocused && searchQuery.length > 0 ? "opacity-0 pointer-events-none" : "opacity-100"
+          )}>
             <Button variant="premium" size="lg" className="group w-full sm:w-auto" onClick={() => navigate("/produk")}>
               Mulai Belanja
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />

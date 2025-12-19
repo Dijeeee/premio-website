@@ -277,7 +277,7 @@ export default function Reviews() {
     
     try {
       if (currentLike?.isLike === isLike) {
-        // Remove like/dislike
+        // Remove like/dislike - optimistic update
         setUserLikes(prev => {
           const newLikes = { ...prev };
           delete newLikes[reviewId];
@@ -296,17 +296,23 @@ export default function Reviews() {
           .single();
         
         if (currentData) {
-          const updateData = isLike 
-            ? { likes: Math.max(0, (currentData.likes || 1) - 1) }
-            : { dislikes: Math.max(0, (currentData.dislikes || 1) - 1) };
+          const newLikes = isLike ? Math.max(0, (currentData.likes || 1) - 1) : (currentData.likes || 0);
+          const newDislikes = !isLike ? Math.max(0, (currentData.dislikes || 1) - 1) : (currentData.dislikes || 0);
           
-          await supabase.from(tableName).update(updateData).eq('id', reviewId);
+          // Use RPC function to update (bypasses RLS)
+          await supabase.rpc('update_review_likes', {
+            p_review_id: reviewId,
+            p_likes: newLikes,
+            p_dislikes: newDislikes,
+            p_is_website_review: isWebsite
+          });
         }
       } else {
         // Toggle or new like/dislike
         const hadPreviousVote = currentLike?.isLike !== undefined && currentLike?.isLike !== null;
         const wasLike = currentLike?.isLike === true;
         
+        // Optimistic update
         setUserLikes(prev => ({ ...prev, [reviewId]: { isLike } }));
 
         // Delete existing vote first
@@ -322,7 +328,7 @@ export default function Reviews() {
           is_like: isLike
         });
         
-        // Get current counts and update
+        // Get current counts
         const { data: currentData } = await supabase
           .from(tableName)
           .select('likes, dislikes')
@@ -347,10 +353,13 @@ export default function Reviews() {
             newDislikes += 1;
           }
           
-          await supabase.from(tableName).update({ 
-            likes: newLikes, 
-            dislikes: newDislikes 
-          }).eq('id', reviewId);
+          // Use RPC function to update (bypasses RLS)
+          await supabase.rpc('update_review_likes', {
+            p_review_id: reviewId,
+            p_likes: newLikes,
+            p_dislikes: newDislikes,
+            p_is_website_review: isWebsite
+          });
         }
       }
 
