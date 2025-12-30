@@ -53,7 +53,7 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-16">
+    <section className="relative min-h-[85vh] flex items-center justify-center pt-16">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
       <div className="absolute top-1/3 left-1/4 w-64 md:w-80 h-64 md:h-80 bg-primary/20 rounded-full blur-3xl animate-float" />
@@ -79,10 +79,10 @@ export function HeroSection() {
           </p>
 
           {/* Search Bar */}
-          <div ref={searchRef} className="relative max-w-xl mx-auto mb-8 animate-slide-up animation-delay-200">
+          <div ref={searchRef} className="relative max-w-xl mx-auto mb-8 animate-slide-up animation-delay-200 z-[100]">
             <form onSubmit={handleSearch}>
               <div className="relative flex items-center">
-                <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
+                <Search className="absolute left-4 h-5 w-5 text-muted-foreground z-10" />
                 <Input
                   type="text"
                   placeholder="Cari Netflix, Canva, ChatGPT..."
@@ -97,11 +97,11 @@ export function HeroSection() {
               </div>
             </form>
 
-            {/* Search Results - only show when there's a query */}
+            {/* Search Results Dropdown - overlays everything */}
             {isSearchFocused && searchQuery.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-[100] animate-scale-in max-h-72">
-                {searchResults.length > 0 && (
-                  <div className="max-h-56 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-[200] animate-scale-in">
+                {searchResults.length > 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
                     {searchResults.map((product) => (
                       <button
                         key={product.id}
@@ -118,8 +118,7 @@ export function HeroSection() {
                       </button>
                     ))}
                   </div>
-                )}
-                {searchResults.length === 0 && (
+                ) : (
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     Tidak ada hasil untuk "{searchQuery}"
                   </div>
@@ -128,35 +127,31 @@ export function HeroSection() {
             )}
           </div>
 
-          {/* CTA Buttons - positioned below search, hidden when search dropdown is open */}
-          {!(isSearchFocused && searchQuery.length > 0) && (
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 mt-4">
-              <Button variant="premium" size="lg" className="group w-full sm:w-auto" onClick={() => navigate("/produk")}>
-                Mulai Belanja
-                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => navigate("/kategori")}>
-                Lihat Kategori
-              </Button>
-            </div>
-          )}
+          {/* CTA Buttons - always visible */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 mt-4">
+            <Button variant="premium" size="lg" className="group w-full sm:w-auto" onClick={() => navigate("/produk")}>
+              Mulai Belanja
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => navigate("/kategori")}>
+              Lihat Kategori
+            </Button>
+          </div>
 
-          {/* Stats - hidden when search is active */}
-          {!(isSearchFocused && searchQuery.length > 0) && (
-            <div className="mt-12 grid grid-cols-4 gap-4 md:gap-8 animate-fade-in animation-delay-400">
-              {[
-                { value: "50K+", label: "Pengguna" },
-                { value: "500+", label: "Aplikasi" },
-                { value: "99%", label: "Puas" },
-                { value: "24/7", label: "Support" },
-              ].map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Stats - always visible */}
+          <div className="mt-12 grid grid-cols-4 gap-4 md:gap-8 animate-fade-in animation-delay-400">
+            {[
+              { value: "50K+", label: "Pengguna" },
+              { value: "500+", label: "Aplikasi" },
+              { value: "99%", label: "Puas" },
+              { value: "24/7", label: "Support" },
+            ].map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
