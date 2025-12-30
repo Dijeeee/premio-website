@@ -141,20 +141,22 @@ export function HeroSection() {
             </div>
           )}
 
-          {/* Stats */}
-          <div className="mt-12 grid grid-cols-4 gap-4 md:gap-8 animate-fade-in animation-delay-400">
-            {[
-              { value: "50K+", label: "Pengguna" },
-              { value: "500+", label: "Aplikasi" },
-              { value: "99%", label: "Puas" },
-              { value: "24/7", label: "Support" },
-            ].map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+          {/* Stats - hidden when search is active */}
+          {!(isSearchFocused && searchQuery.length > 0) && (
+            <div className="mt-12 grid grid-cols-4 gap-4 md:gap-8 animate-fade-in animation-delay-400">
+              {[
+                { value: "50K+", label: "Pengguna" },
+                { value: "500+", label: "Aplikasi" },
+                { value: "99%", label: "Puas" },
+                { value: "24/7", label: "Support" },
+              ].map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stat.value}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
