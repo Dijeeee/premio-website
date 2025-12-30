@@ -129,18 +129,17 @@ export function HeroSection() {
           </div>
 
           {/* CTA Buttons - positioned below search, hidden when search dropdown is open */}
-          <div className={cn(
-            "flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 mt-4 transition-opacity duration-200",
-            isSearchFocused && searchQuery.length > 0 ? "opacity-0 pointer-events-none" : "opacity-100"
-          )}>
-            <Button variant="premium" size="lg" className="group w-full sm:w-auto" onClick={() => navigate("/produk")}>
-              Mulai Belanja
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => navigate("/kategori")}>
-              Lihat Kategori
-            </Button>
-          </div>
+          {!(isSearchFocused && searchQuery.length > 0) && (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-slide-up animation-delay-300 mt-4">
+              <Button variant="premium" size="lg" className="group w-full sm:w-auto" onClick={() => navigate("/produk")}>
+                Mulai Belanja
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => navigate("/kategori")}>
+                Lihat Kategori
+              </Button>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="mt-12 grid grid-cols-4 gap-4 md:gap-8 animate-fade-in animation-delay-400">
