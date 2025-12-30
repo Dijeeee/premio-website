@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
+import { notifyReviewLike, notifyReviewReply } from "@/lib/notificationHelper";
 
 const avatarColors = [
   "from-pink-500 to-rose-500",
@@ -181,6 +182,14 @@ export default function Reviews() {
       .single();
 
     const tableName = isWebsite ? 'website_review_replies' : 'review_replies';
+    const reviewTableName = isWebsite ? 'website_reviews' : 'reviews';
+    
+    // Get review owner
+    const { data: reviewData } = await supabase
+      .from(reviewTableName)
+      .select('user_id')
+      .eq('id', reviewId)
+      .single();
     
     const { error } = await supabase.from(tableName).insert({
       review_id: reviewId,
@@ -192,6 +201,15 @@ export default function Reviews() {
     if (error) {
       toast.error("Gagal mengirim balasan");
       return;
+    }
+
+    // Send notification to review owner (only if not replying to own review)
+    if (reviewData && reviewData.user_id !== user.id) {
+      await notifyReviewReply(
+        reviewData.user_id,
+        profile?.full_name || 'Pengguna',
+        isWebsite ? 'website' : 'product'
+      );
     }
 
     toast.success("Balasan berhasil dikirim");
@@ -276,6 +294,15 @@ export default function Reviews() {
     const tableName = isWebsite ? 'website_reviews' : 'reviews';
     
     try {
+      // Get review owner info first
+      const { data: reviewData } = await supabase
+        .from(tableName)
+        .select('user_id, likes, dislikes')
+        .eq('id', reviewId)
+        .single();
+      
+      const reviewOwnerId = reviewData?.user_id;
+      
       if (currentLike?.isLike === isLike) {
         // Remove like/dislike - optimistic update
         setUserLikes(prev => {
@@ -288,16 +315,9 @@ export default function Reviews() {
           .eq('review_id', reviewId)
           .eq('user_id', user.id);
         
-        // Get current count and decrement
-        const { data: currentData } = await supabase
-          .from(tableName)
-          .select('likes, dislikes')
-          .eq('id', reviewId)
-          .single();
-        
-        if (currentData) {
-          const newLikes = isLike ? Math.max(0, (currentData.likes || 1) - 1) : (currentData.likes || 0);
-          const newDislikes = !isLike ? Math.max(0, (currentData.dislikes || 1) - 1) : (currentData.dislikes || 0);
+        if (reviewData) {
+          const newLikes = isLike ? Math.max(0, (reviewData.likes || 1) - 1) : (reviewData.likes || 0);
+          const newDislikes = !isLike ? Math.max(0, (reviewData.dislikes || 1) - 1) : (reviewData.dislikes || 0);
           
           // Use RPC function to update (bypasses RLS)
           await supabase.rpc('update_review_likes', {
@@ -328,16 +348,9 @@ export default function Reviews() {
           is_like: isLike
         });
         
-        // Get current counts
-        const { data: currentData } = await supabase
-          .from(tableName)
-          .select('likes, dislikes')
-          .eq('id', reviewId)
-          .single();
-        
-        if (currentData) {
-          let newLikes = currentData.likes || 0;
-          let newDislikes = currentData.dislikes || 0;
+        if (reviewData) {
+          let newLikes = reviewData.likes || 0;
+          let newDislikes = reviewData.dislikes || 0;
           
           if (hadPreviousVote) {
             if (wasLike) {
@@ -360,6 +373,23 @@ export default function Reviews() {
             p_dislikes: newDislikes,
             p_is_website_review: isWebsite
           });
+          
+          // Send notification to review owner (only for new likes/dislikes, not toggles, and not own reviews)
+          if (!hadPreviousVote && reviewOwnerId && reviewOwnerId !== user.id) {
+            // Get liker's name
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', user.id)
+              .single();
+            
+            await notifyReviewLike(
+              reviewOwnerId,
+              profile?.full_name || 'Pengguna',
+              isLike,
+              isWebsite ? 'website' : 'product'
+            );
+          }
         }
       }
 
