@@ -35,9 +35,24 @@ const sortOptions: { value: SortOption; label: string }[] = [
 export default function Products() {
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("kategori") || "Semua";
-  const [selectedCategory, setSelectedCategory] = useState(
-    initialCategory === "Semua" ? "Semua" : initialCategory.charAt(0).toUpperCase() + initialCategory.slice(1)
-  );
+  
+  // Map URL category to proper category name
+  const mapCategoryFromUrl = (urlCategory: string): string => {
+    if (urlCategory === "Semua") return "Semua";
+    const categoryMap: Record<string, string> = {
+      "streaming": "Streaming",
+      "productivity": "Productivity", 
+      "ai tools": "AI Tools",
+      "musik": "Musik",
+      "editing": "Editing",
+      "design": "Design",
+      "cloud": "Cloud Storage",
+      "development": "Development"
+    };
+    return categoryMap[urlCategory.toLowerCase()] || urlCategory.charAt(0).toUpperCase() + urlCategory.slice(1);
+  };
+  
+  const [selectedCategory, setSelectedCategory] = useState(mapCategoryFromUrl(initialCategory));
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<Record<string, "weekly" | "monthly" | "yearly">>({});
   const [sortBy, setSortBy] = useState<SortOption>("popular");

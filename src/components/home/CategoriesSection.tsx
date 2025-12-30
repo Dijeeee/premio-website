@@ -9,7 +9,7 @@ const categories = [
     description: "CapCut, VN, Adobe Premiere",
     count: 45,
     color: "from-rose-500 to-pink-500",
-    href: "/kategori/editing",
+    href: "/produk?kategori=editing",
   },
   {
     icon: Tv,
@@ -17,7 +17,7 @@ const categories = [
     description: "Netflix, Disney+, HBO Max",
     count: 32,
     color: "from-red-500 to-orange-500",
-    href: "/kategori/streaming",
+    href: "/produk?kategori=streaming",
   },
   {
     icon: Music,
@@ -25,7 +25,7 @@ const categories = [
     description: "Spotify, Apple Music, YouTube",
     count: 28,
     color: "from-green-500 to-emerald-500",
-    href: "/kategori/musik",
+    href: "/produk?kategori=musik",
   },
   {
     icon: Briefcase,
@@ -33,7 +33,7 @@ const categories = [
     description: "Canva, Notion, Grammarly",
     count: 56,
     color: "from-blue-500 to-cyan-500",
-    href: "/kategori/productivity",
+    href: "/produk?kategori=productivity",
   },
   {
     icon: Sparkles,
@@ -41,7 +41,7 @@ const categories = [
     description: "ChatGPT, Midjourney, Claude",
     count: 24,
     color: "from-purple-500 to-violet-500",
-    href: "/kategori/ai-tools",
+    href: "/produk?kategori=ai tools",
   },
   {
     icon: Cloud,
@@ -49,7 +49,7 @@ const categories = [
     description: "Google One, Dropbox, iCloud",
     count: 18,
     color: "from-sky-500 to-blue-500",
-    href: "/kategori/cloud",
+    href: "/produk?kategori=cloud",
   },
   {
     icon: Palette,
@@ -57,7 +57,7 @@ const categories = [
     description: "Figma, Adobe CC, Sketch",
     count: 38,
     color: "from-amber-500 to-yellow-500",
-    href: "/kategori/design",
+    href: "/produk?kategori=design",
   },
   {
     icon: Code,
@@ -65,7 +65,7 @@ const categories = [
     description: "GitHub, JetBrains, Vercel",
     count: 42,
     color: "from-slate-500 to-zinc-500",
-    href: "/kategori/development",
+    href: "/produk?kategori=development",
   },
 ];
 
