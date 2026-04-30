@@ -2,7 +2,7 @@
 
 ## Project info
 
-Project ini di buat sebagai hasil dari mata kuliah Pemrograman Website dengan tema/konsep Penjualan Aplikasi Premium
+Project ini di buat sebagai hasil dari mata kuliah Pemrograman Website dengan tema/konsep "Penjualan Aplikasi Premium"
 
 Project ini di buat dengan :
 
