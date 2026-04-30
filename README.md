@@ -11,4 +11,7 @@ Project ini di buat dengan :
 - React
 - shadcn-ui
 - Tailwind CSS
+- Free Hosting (Lovalable)
 
+## Berikut Link Websitenya
+# https
