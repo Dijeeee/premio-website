@@ -14,4 +14,4 @@ Project ini di buat dengan :
 - Free Hosting (Lovalable)
 
 ## Berikut Link Websitenya
-# https
+# https://premio-website.lovable.app
